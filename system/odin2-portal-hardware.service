@@ -1,0 +1,29 @@
+[Unit]
+Description=Odin2 Portal hardware control helper
+After=local-fs.target
+
+[Service]
+Type=simple
+User=root
+Group=@GID@
+ExecStart=/usr/bin/python3 -I -B /usr/local/lib/odin2-portal-hardware/daemon.py --uid @UID@
+Restart=on-failure
+RestartSec=2
+RuntimeDirectory=odin2-portal-hardware
+RuntimeDirectoryMode=0750
+StateDirectory=odin2-portal-hardware
+StateDirectoryMode=0700
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectHome=true
+ProtectSystem=full
+ProtectControlGroups=true
+ProtectKernelModules=true
+RestrictAddressFamilies=AF_UNIX
+LockPersonality=true
+TimeoutStopSec=10
+
+[Install]
+WantedBy=multi-user.target

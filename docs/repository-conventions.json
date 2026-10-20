@@ -1,0 +1,104 @@
+{
+  "review_date": "2026-10-20",
+  "catalog_url": "https://plugins.omarchy.org/index.html?text=luddite",
+  "repositories": [
+    {
+      "repo": "TechLuddite/Jeans-Instability",
+      "commit": "dc85fa1de6c6fc4949cdd692980c154b14a834dc",
+      "files": [
+        ".github/workflows/ci.yml",
+        "README.md",
+        "SECURITY.md",
+        "manifest.json"
+      ],
+      "purpose": "Repository/docs/CI/media conventions only; no runtime implementation copied.",
+      "sha256": {
+        ".github/workflows/ci.yml": "0baa64f518038c886b74c067ee1a4e7fb15f608a64b530625a5399c263d6a573",
+        "README.md": "48946eabb71f1c664e67cdd688eb4e7f9c7927f14916ecb64ab984446376ff55",
+        "SECURITY.md": "1a2358faf063c58a8e68bdb12435c52aa5cd607cafb1f02cc8bb872890b1e492",
+        "manifest.json": "0bbfe075b669adecd239a44477b041eb10c4a6d82de3a9a820fa0fc7c33f0e64"
+      }
+    },
+    {
+      "repo": "TechLuddite/Luddite-Scout",
+      "commit": "accc9bfb9f89d97bca7de1e0d43f48d2c9c57402",
+      "files": [
+        ".github/workflows/test.yml",
+        "README.md",
+        "SECURITY.md",
+        "manifest.json"
+      ],
+      "purpose": "Repository/docs/CI/media conventions only; no runtime implementation copied.",
+      "sha256": {
+        ".github/workflows/test.yml": "1b50f66e3ad403691e9b83a22aab2ede2f80e525e0447a64866bd8c8ff1fdc02",
+        "README.md": "9d8099150dd6d8b3e7136c749cfe64f2c31060067307c66a236169d3dc4aed8a",
+        "SECURITY.md": "21f6055836281af4ce43f5f814e917fd30df3e37b39f1286a9ee9a9867237886",
+        "manifest.json": "54827abd54df238b204b35f8110bc270d3be726e0ac1d04e6f8966ca6513808a"
+      }
+    },
+    {
+      "repo": "TechLuddite/luddite-gestures",
+      "commit": "f37fcb3e2ae9fe1b90bddb3df355d82820c5a295",
+      "files": [
+        ".github/workflows/ci.yml",
+        "README.md",
+        "SECURITY.md",
+        "manifest.json"
+      ],
+      "purpose": "Repository/docs/CI/media conventions only; no runtime implementation copied.",
+      "sha256": {
+        ".github/workflows/ci.yml": "c6ae231a9425c97d729082c4ecd81f1de9cf5a07ae8e3f6daba3eefaa30877e0",
+        "README.md": "47b2455ab3d439659a041aae63c075fe671d7391a4552a5f0d4eead310a8c2f7",
+        "SECURITY.md": "6910f3a3a140017bbbbe0d013bf1666b7d293563ed2f70bf5d79d8a1f9d82b04",
+        "manifest.json": "09fdb56c7e88dbb0488db96e72b91439873ef2f9d5be0852ff4ff09adc98fb0f"
+      }
+    },
+    {
+      "repo": "TechLuddite/luddite-pxe-dust",
+      "commit": "e36bd74364312d18300990101eec878f48c6eb75",
+      "files": [
+        ".github/workflows/ci.yml",
+        "README.md",
+        "SECURITY.md",
+        "manifest.json"
+      ],
+      "purpose": "Repository/docs/CI/media conventions only; no runtime implementation copied.",
+      "sha256": {
+        ".github/workflows/ci.yml": "eeb7b0f896c88a214ecdc2e35c1c5f0619e543a192e9c075ac1d2bfb4d6f6e1e",
+        "README.md": "d5201809bac4b19bd4d09212339701cbb7b7ebdbaaffc5cbdd8846774fabb1f0",
+        "SECURITY.md": "8a547e35803a7632abc2364fb8a0f1b846602bfb3ee1ba4fed823bd66f671d56",
+        "manifest.json": "947137c29fca77d2216050e39c3e5191592ccc32bc5410e5b09765dde9d7de20"
+      }
+    },
+    {
+      "repo": "TechLuddite/luddite-voice-osd",
+      "commit": "c662faf64b9ca7cf597dcf65a1b46a5453c6b08d",
+      "files": [
+        ".github/workflows/ci.yml",
+        "CHANGELOG.md",
+        "README.md",
+        "SECURITY.md",
+        "docs/media/README.md",
+        "manifest.json"
+      ],
+      "purpose": "Repository/docs/CI/media conventions only; no runtime implementation copied.",
+      "sha256": {
+        ".github/workflows/ci.yml": "dc7105c977759a25da187295ff9ce3fd8d35c0d39a874f315582a6b3db2f56a9",
+        "CHANGELOG.md": "e889707b186c449acd542241c1c72476d5e1f1aa7cb79a8ab37a45969ca4e993",
+        "README.md": "1a0db684eaa439fd319d84c6222c381cf104bb9de58734927c20a3fe1a2dc9f9",
+        "SECURITY.md": "f9560a551b2d1f5ff25f6d487368dcd032f0275d3f202a5713970cf00dbb104a",
+        "docs/media/README.md": "1bf55c55e816e5eedd688951b44661c3f447dc0261c1cf155f8806f961243e92",
+        "manifest.json": "dad3a02fc03dad080cf012cfcdd28daea360d749824d186d0a058ed82cf3c599"
+      }
+    }
+  ],
+  "decisions": [
+    "root manifest and native Omarchy QML",
+    "README plus SECURITY, CHANGELOG, THIRD_PARTY and development record",
+    "tests and repository hygiene checks",
+    "read-only Actions permissions, immutable action/scanner pins",
+    "Scout and marketplace baseline on main pushes",
+    "root preview.png and docs/media with synthetic/live distinction",
+    "no remote CI or marketplace verification claimed before publication"
+  ]
+}

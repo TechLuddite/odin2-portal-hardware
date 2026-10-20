@@ -1,0 +1,27 @@
+#!/usr/bin/env python3
+"""Print one read-only hardware snapshot. No installed dependencies beyond Python."""
+import argparse
+import json
+from pathlib import Path
+import sys
+
+sys.dont_write_bytecode = True
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from backend.portal import Portal
+from backend.client import exchange
+
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument("--sys-root", type=Path, default=Path("/sys"),
+                    help="Alternate sysfs tree for offline fixtures; reads only")
+parser.add_argument("--session", help="Renew this panel's existing helper lease while reading")
+parser.add_argument("--request", help="One JSON operation sent to the separately installed helper")
+args = parser.parse_args()
+if args.request:
+    result = exchange(json.loads(args.request))
+else:
+    result = Portal(args.sys_root).snapshot()
+    if args.session and args.sys_root == Path("/sys") and result["supported"]:
+        result["controls"] = exchange({"op": "status", "token": args.session})
+        result["controls_available"] = result["controls"].get("available", False)
+        result["access"] = "session-controls" if result["controls_available"] else "read-only"
+print(json.dumps(result, allow_nan=False, separators=(",", ":")))

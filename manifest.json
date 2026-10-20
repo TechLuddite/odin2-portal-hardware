@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "id": "io.github.techluddite.odin2-portal-hardware",
+  "name": "Odin2 Portal Hardware",
+  "version": "0.2.1",
+  "author": "TechLuddite",
+  "license": "MIT",
+  "description": "Portal hardware monitoring, session fan controls, Linux CPU/GPU power presets and joystick RGB rings.",
+  "kinds": [
+    "service",
+    "bar-widget"
+  ],
+  "entryPoints": {
+    "service": "Service.qml",
+    "barWidget": "BarWidget.qml"
+  },
+  "barWidget": {
+    "displayName": "Portal Hardware",
+    "description": "Portal temperatures, fan RPM, clocks and battery",
+    "category": "Hardware",
+    "defaultSection": "right",
+    "allowMultiple": false
+  }
+}
