@@ -14,11 +14,14 @@ this implementation contains no copied Decky power/fan code. See
 
 ## Development status
 
-Version 0.2.1 is a local development build with monitoring and **Power, Fan
+Version 0.3.3 is a local development build with monitoring and **Power, Fan
 and Lights** controls. Power presets use advertised Linux CPU/GPU clock steps;
 they are not claimed to reproduce Android's original performance modes. Fan
 control offers Auto, Manual (30–100% duty) and Maximum. Static RGB colors and
-brightness can be applied to either joystick ring or both. Charge limits are
+brightness can be applied to either joystick ring or both. Nonzero RGB updates
+first turn the selected rings off, confirm that state, then apply the requested
+color and brightness through the existing helper. This avoids an observed
+queued color/brightness update race; a brief off transition is expected. Charge limits are
 not implemented.
 
 The target is the **Portal**, rather than every device with an ARM CPU or
@@ -62,7 +65,9 @@ panel; right-click refreshes. Escape closes the panel. **Overview**, **Controls*
 controls, per-policy CPU/GPU readings and named thermal sensors. The body scrolls when available screen height requires it.
 
 The shared service refreshes every 15 seconds with panels closed and every
-three seconds while a panel is open or this plugin holds a hardware lease. Opening it cannot alter hardware settings.
+three seconds while initializing, open or holding a hardware lease. Loading the
+enabled plugin restores saved power/fan choices, or applies Saver and Auto when
+none exist. Opening the popup does not change those choices.
 On a read failure, the panel marks retained readings as stale and reports the
 error. The reader has a five-second timeout; disabling/removing the plugin
 ends monitoring and expires the control lease.
@@ -83,14 +88,25 @@ It accepts fixed operations over a Unix socket authenticated to the configured
 desktop UID. No sudoers rule or writable sysfs permissions are added. Installing
 or starting the helper does not change hardware settings.
 
-Controls acquire a session lease only when explicitly applied. Closing the popup
+Power/fan initialization and explicit controls acquire a session lease. Closing the popup
 keeps settings active. Disabling the plugin, a shell restart, or loss of its
 heartbeat restores the captured settings within 10 seconds. Suspend gaps also
-release the lease; choices are not reapplied automatically on boot/resume.
-**Restore previous settings** releases all owned controls. A root-owned journal
+release the lease. The running UI re-establishes saved power/fan choices after
+resume, and a newly loaded plugin does so at login. Unrelated plugin rescans
+retain this service and its lease through `keepLoaded:true`.
+**Restore previous settings** releases all owned controls and suppresses automatic
+initialization for the remainder of that service instance. RGB remains session-only.
+A root-owned journal
 recovers partial writes or a daemon restart on the same boot, and ignores stale
 journals from an earlier boot. Writes are checked by reading back the kernel.
 Detected external changes are preserved rather than overwritten.
+
+Successful explicit power/fan changes are stored in the user's private
+`~/.local/state/odin2-portal-hardware/power-fan.json` (or XDG state root).
+Invalid saved data falls back to Saver/Auto without overwriting the bad file.
+Startup waits for another owner's lease/recovery rather than stealing it.
+No extra root operation is added; initialization uses the existing validated
+fan and power requests. Root helper code and its thermal safeguards are unchanged.
 
 The fan follows the hottest CPU/GPU sensor in Auto mode. At 85°C, missing CPU/GPU
 sensors or sustained zero RPM, it uses full speed. Fan-off is excluded. Recovery
@@ -163,3 +179,17 @@ See the [light and dark theme examples](docs/media/README.md).
 
 Report security issues privately as described in [SECURITY.md](SECURITY.md).
 MIT; see [LICENSE](LICENSE) and [THIRD_PARTY.md](THIRD_PARTY.md).
+
+
+### Inspect power levels
+
+In Controls → Power, the original level buttons apply a level. The separate
+**Inspect a level · no changes** selector previews Save, Balanced or Full without
+sending a control request. It uses the command planner and advertised clock
+steps to show CPU minimum/ceiling and governor behavior, plus the GPU ceiling.
+Full requests the CPU ceiling through Performance; it does not write equal
+minimum/maximum values. GPU governor/minimum, UFS governor/range, fan and RGB
+remain unchanged by these presets. The **Observed now** readout shows actual
+CPU/GPU/UFS governors and clocks, including choices made by another owner.
+A hot reading at or above 85°C displays a warning and actual fan duty/RPM.
+The preview is not a guarantee of effective clocks under thermal/QoS limits.

@@ -45,6 +45,34 @@ class PortalTests(unittest.TestCase):
         self.assertEqual(gpu["current_mhz"], 680)
         self.assertEqual(gpu["available_mhz"], [220, 680])
 
+    def test_storage_telemetry_uses_hz_without_claiming_preset_ownership(self):
+        storage=self.adapter.snapshot()['storage'][0]
+        self.assertEqual((storage['governor'],storage['current_mhz']),('performance',300))
+        self.assertEqual(storage['available_mhz'],[75,150,300])
+        self.assertTrue(all(p['storage']=='unchanged' for p in self.adapter.snapshot()['power_presets']))
+
+    def test_preset_previews_match_reviewed_advertised_caps_and_do_not_pin_minimums(self):
+        from test_controls import control_tree
+        control_tree(self.root)
+        plans=self.adapter.snapshot()['power_presets']
+        self.assertEqual([p['mode'] for p in plans],['saver','balanced','performance'])
+        self.assertEqual([[c['maximum_mhz'] for c in p['cpus']] for p in plans],
+                         [[1000,1800,1800],[1000,1800,1800],[2016,2803.2,2956.8]])
+        self.assertEqual([p['gpu_maximum_mhz'] for p in plans],[401,680,680])
+        for plan in plans:
+            self.assertTrue(all(c['minimum_mhz']==300 and not c['minimum_equals_maximum'] for c in plan['cpus']))
+            self.assertEqual(plan['gpu_governor'],'unchanged')
+            self.assertEqual(plan['gpu_minimum'],'unchanged')
+        self.assertEqual(plans[-1]['cpus'][0]['behavior'],'requests-ceiling')
+        self.assertEqual(plans[0]['cpus'][0]['behavior'],'stepped-scaling')
+
+    def test_missing_steps_do_not_invent_zero_frequency_or_pin(self):
+        self.set('devices/system/cpu/cpufreq/policy7/scaling_available_frequencies','')
+        cpu=self.adapter.snapshot()['power_presets'][0]['cpus'][0]
+        self.assertIsNone(cpu['minimum_mhz'])
+        self.assertIsNone(cpu['maximum_mhz'])
+        self.assertIsNone(cpu['minimum_equals_maximum'])
+
     def test_hottest_cpu_is_not_diluted_by_other_sensors(self):
         self.assertEqual(self.adapter.snapshot()["thermals"]["cpu_c"], 95.5)
         self.assertEqual(self.adapter.snapshot()["thermals"]["gpu_c"], 61)

@@ -152,3 +152,30 @@ See the Portal project's `docs/odin2-portal-hardware-controls-20261020.md` and
 The user authorizes a local-only source commit if checks and the exact-index
 privacy/media audits pass. No remote, hosted CI, marketplace verification,
 publication or new runtime deployment is part of this checkpoint.
+
+## October 21 local 0.3.3 checkpoint
+
+The user requests documentation and a local-only commit after testing. The
+installed plugin is 0.3.3. The parent Portal repository records deployment,
+recovery and acceptance in its October 21 handoff and dedicated startup,
+preset-detail, theme and LED-brightness records.
+
+The source now retains the service across registry rescans, starts with saved
+validated power/fan preferences or Saver/Auto, and supports guarded same-boot
+session adoption without adding a root API. Preset descriptions use the same
+pure plan as CPU writes; popup controls explicitly inherit popup text colors.
+RGB changes validate the complete request, confirm an off transaction for the
+selected groups, then apply the target. The two RGB operations are individually
+journaled and can briefly blink; failure is reported without blind retry.
+The deployed root helper remains the reviewed 0.2.1 installation.
+
+76 disposable-tree unit/repository checks pass on host and native ARM. Startup
+QML, manifest validation, dark adaptive-bar and light popup fixtures pass.
+Native/installed LED probes and their restoration are recorded by the parent;
+they are not repeated for this checkpoint. No new physical LED, sustained
+thermal, suspend or startup acceptance is inferred. Hosted CI/publication remain
+pending. The user's later Saver/Auto and white half-brightness choices supersede
+the earlier Full/Max/green probe restoration.
+
+This section is a source documentation update only. The installed 58-file
+receipt remains frozen; do not redeploy solely to synchronize this paragraph.

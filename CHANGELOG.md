@@ -1,5 +1,44 @@
 # Changelog
 
+## 0.3.3 — reliable LED brightness transitions
+
+- Turn selected rings off and confirm all selected groups before applying a
+  nonzero color/brightness request through the existing journaled helper API.
+- Validate the complete target before any preliminary off operation; stop on
+  off-step failure or missing ownership, and report target errors without retry.
+- Keep off, status, fan, power and restore requests unchanged. No root helper
+  update or new privileged operation is required. A brief off transition is
+  expected when applying a nonzero LED setting.
+
+## 0.3.2 — popup theme text
+
+- Use the popup text palette instead of the transparent bar’s adaptive foreground.
+- Keep titles, unselected buttons and readings readable with Osaka Jade and
+  follow live popup palette changes independently of bar colors.
+- Preserve hardware policy, controls and saved choices.
+
+## 0.3.1 — inspect power-level effects
+
+- Preview each power level without applying it: exact advertised CPU ranges and
+  ceilings, scaling/performance behavior and unchanged GPU/UFS/fan/RGB fields.
+- Show live CPU/GPU/UFS governors and clocks beside the planned settings.
+- Flag temperatures at or above the existing 85°C fan safeguard with fan readback.
+- Reuse the command planner for previews; no privileged helper or policy change.
+
+
+## 0.3.0 — startup power/fan preferences and Portal feedback
+
+- Initialize Saver power and Auto fan when no saved choices exist; restore
+  validated saved power/fan preferences on subsequent plugin sessions.
+- Remember only successful power/fan changes in a private user state file.
+- Keep thermal/sensor/stall overrides and explicit release behavior in the
+  existing root helper. RGB remains session-only.
+
+- Give Apply color and Lights off visible button borders before interaction.
+- Retain the hardware service through unrelated Omarchy plugin rescans, keeping
+  its current session token and leases. Explicit disable/removal and shell exit
+  still release the service. Portal deployment/acceptance is recorded separately.
+
 ## 0.2.1 — local inspection bridge
 
 - Export the actual panel's bounded QML scene as JSON through existing IPC.

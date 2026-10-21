@@ -11,11 +11,18 @@ Item {
   property string lastError: ""
   property var readers: []
   property double sampledAt: 0
+  readonly property double instanceEpoch: Date.now()
   property bool timedOut: false
   property string sessionToken: "portal_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2) + "_panel"
   property var controls: snapshot?.controls ?? ({available: false})
   property string controlError: ""
-  property bool controlling: writer.running
+  property bool controlling: writer.running || startup.running || bootstrap.running
+  property bool startupManaged: true
+  property bool handoffManaged: true
+  property var handoffCommand: root.controlCommand.concat(["--adopt-session"])
+  property bool startupSuppressed: false
+  property bool startupReady: false
+  property var startupCommand: root.controlCommand.concat(["--startup", "--session", root.sessionToken])
   property string requestPayload: ""
   property double leaseTouchedAt: 0
   property var controlCommand: ["/usr/bin/python3", "-I", "-B",
@@ -28,7 +35,8 @@ Item {
     Qt.resolvedUrl("bin/odin2-portal-hardware").toString().replace(/^file:\/\//, ""), "--session", root.sessionToken]
 
   function control(request) {
-    if (writer.running) return
+    if (writer.running || startup.running || bootstrap.running) return
+    if (request.op === "restore") root.startupSuppressed = true
     request.token = root.sessionToken
     root.requestPayload = JSON.stringify(request)
     root.leaseTouchedAt = Date.now()
@@ -37,7 +45,7 @@ Item {
   }
 
   function refresh() {
-    if (!reader.running) {
+    if (!reader.running && !bootstrap.running) {
       root.timedOut = false
       reader.running = true
       deadline.restart()
@@ -63,15 +71,52 @@ Item {
       root.snapshot = value
       root.sampledAt = Date.now()
       root.lastError = ""
+      if (root.startupManaged && !root.startupSuppressed && value.supported && value.controls?.available
+          && !writer.running && !startup.running) {
+        if (!value.controls.owned || !value.controls.fan_mode || !value.controls.power_mode) {
+          root.startupReady = false
+          if (!value.controls.occupied && !value.controls.recovering) startup.running = true
+        } else root.startupReady = true
+      }
     } catch (error) {
       root.lastError = "Hardware readings are unavailable."
     }
   }
   Timer {
-    interval: root.controls?.owned || Date.now() - root.leaseTouchedAt < 15000 || root.readers.length ? 3000 : 15000
+    interval: (root.startupManaged && !root.startupSuppressed && !root.startupReady)
+      || root.controls?.owned || Date.now() - root.leaseTouchedAt < 15000 || root.readers.length ? 3000 : 15000
     running: true
     repeat: true
     onTriggered: root.refresh()
+  }
+  Process {
+    id: bootstrap
+    command: root.handoffCommand
+    stdout: StdioCollector {
+      onStreamFinished: {
+        try {
+          var value = JSON.parse(text)
+          if (value.adopted && typeof value.token === "string" && /^[A-Za-z0-9_-]{20,100}$/.test(value.token))
+            root.sessionToken = value.token
+        } catch (error) {}
+      }
+    }
+    onExited: root.refresh()
+  }
+  Process {
+    id: startup
+    command: root.startupCommand
+    stdout: StdioCollector {
+      onStreamFinished: {
+        try {
+          var result = JSON.parse(text)
+          root.startupReady = result.startup === "ready"
+          root.controlError = result.error || (root.startupReady ? "" : "Waiting to restore saved power/fan settings")
+          if (root.snapshot) root.snapshot = Object.assign({}, root.snapshot, {controls: result})
+        } catch (error) { root.controlError = "Could not initialize power/fan settings" }
+      }
+    }
+    onExited: if (root.startupReady) root.refresh()
   }
   Timer {
     id: deadline
@@ -90,7 +135,7 @@ Item {
         try {
           if (text.length > 65536) throw new Error("size")
           var result = JSON.parse(text)
-          root.controlError = result.error || ""
+          root.controlError = result.error || result.preference_error || ""
           if (root.snapshot) root.snapshot = Object.assign({}, root.snapshot, {controls: result})
         } catch (error) { root.controlError = "Invalid response from hardware helper." }
       }
@@ -120,7 +165,8 @@ Item {
       return JSON.stringify({supported: root.supported, access: root.snapshot?.access ?? "read-only",
         sampled: root.sampledAt > 0, stale: root.stale, busy: root.busy,
         error: root.lastError, controls_available: root.controls?.available === true,
-        controls: root.controls, control_error: root.controlError})
+        controls: root.controls, control_error: root.controlError, startup_ready: root.startupReady,
+        instance_epoch: root.instanceEpoch})
     }
     function control(request: string): void {
       try { root.control(JSON.parse(request)) }
@@ -141,5 +187,5 @@ Item {
       } catch (error) { return JSON.stringify({error: "Invalid navigation request"}) }
     }
   }
-  Component.onCompleted: refresh()
+  Component.onCompleted: { if (startupManaged && handoffManaged) bootstrap.running = true; else refresh() }
 }

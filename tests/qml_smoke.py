@@ -21,7 +21,7 @@ def main():
     parser.add_argument("--shell-dir", type=Path, default=Path("/usr/share/omarchy/shell"))
     parser.add_argument("--wayland-socket", type=Path)
     parser.add_argument("--artifacts", type=Path)
-    parser.add_argument("--theme", choices=["hackerman", "catppuccin-latte", "gruvbox"])
+    parser.add_argument("--theme", choices=["hackerman", "catppuccin-latte", "gruvbox", "osaka-jade"])
     args = parser.parse_args()
     repo = Path(__file__).resolve().parents[1]
     if args.artifacts:
@@ -105,14 +105,14 @@ ShellRoot {
     })
     else { if (after) after(); root.stage = nextStage }
   }
-  Service { id: service; readerCommand: __COMMAND__; controlCommand: __CONTROL__ }
+  Service { id: service; startupManaged: false; readerCommand: __COMMAND__; controlCommand: __CONTROL__ }
   QtObject {
     id: bar
     property bool vertical: false
     property bool foregroundAnimationEnabled: false
     property string position: "top"
     property int barSize: 30
-    property color barForeground: Theme.Color.popups.text
+    property color barForeground: "#090f0d"
     property color foreground: Theme.Color.popups.text
     property color background: Theme.Color.popups.background
     property color urgent: Theme.Color.urgent
@@ -165,6 +165,7 @@ ShellRoot {
           root.stage++
         } else if (root.stage === 1) {
           root.check(widget.opened && service.readers.length === 1, "popup requests fast readings")
+          root.check(widget.panel.form.foreground.toString() === Theme.Color.popups.text.toString(), "popup text uses popup palette when transparent bar text differs")
           widget.close()
           root.check(!widget.opened && service.readers.length === 0, "popup releases fast readings")
           root.check(root.find(monitor, "fanRpm").value === "2400 RPM", "real fan readout")
@@ -192,6 +193,9 @@ ShellRoot {
           })
         } else if (root.stage === 6) {
           root.check(monitor.foreground.toString() === "#123456", "live theme binding")
+          root.check(widget.panel.form.foreground.toString() === "#123456", "real popup follows live theme changes independently of bar")
+          Theme.Color.shellValues = {"popups.text": "#e8c070", "bar.text": "#090f0d"}
+          root.check(widget.panel.form.foreground.toString() === "#e8c070", "popup surface override wins over global and bar text")
           var unknown = JSON.parse(JSON.stringify(root.good))
           unknown.supported = false; unknown.reason = "This plugin currently supports the AYN Odin 2 Portal."
           service.accept(JSON.stringify(unknown))
@@ -210,6 +214,15 @@ ShellRoot {
           root.stage++
         } else if (root.stage === 9) {
           root.check(root.find(monitor, "powerPresets").enabled, "helper enables power presets")
+          var originalRequest = service.requestPayload
+          root.find(monitor, "presetPreview").changed("saver")
+          root.check(service.requestPayload === originalRequest, "preview never dispatches controls")
+          root.check(root.find(monitor, "presetDetails").text.indexOf("Minimum equals maximum: fixed range.") !== -1, "Save detects a fixed range when advertised steps require it")
+          root.find(monitor, "presetPreview").changed("performance")
+          root.check(root.find(monitor, "presetDetails").text.indexOf("minimum is not pinned") !== -1, "Full describes request versus pin")
+          root.check(root.find(monitor, "presetDetails").text.indexOf("Governor unchanged") !== -1, "GPU unchanged fields explicit")
+          root.check(root.find(monitor, "liveGovernors").text.indexOf("UFS: Performance · 300 MHz") !== -1, "trial governor visible separately")
+          root.check(root.find(monitor, "thermalWarning").visible, "hot CPU warning visible")
           root.find(monitor, "powerPresets").changed("saver")
           root.check(JSON.parse(service.requestPayload).op === "power", "power command")
           root.capture("controls-power", 10, function() { root.find(monitor, "hardwareControls").section = "fan" })

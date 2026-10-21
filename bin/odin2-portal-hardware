@@ -9,15 +9,31 @@ sys.dont_write_bytecode = True
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from backend.portal import Portal
 from backend.client import exchange
+from backend.preferences import initialize, location, remember, adopt_session, handoff_location
 
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument("--sys-root", type=Path, default=Path("/sys"),
                     help="Alternate sysfs tree for offline fixtures; reads only")
 parser.add_argument("--session", help="Renew this panel's existing helper lease while reading")
 parser.add_argument("--request", help="One JSON operation sent to the separately installed helper")
+parser.add_argument("--startup", action="store_true", help="Restore saved power/fan choices, or Saver and Auto defaults")
+parser.add_argument("--adopt-session", action="store_true", help="Consume a private one-time upgrade handoff")
 args = parser.parse_args()
-if args.request:
-    result = exchange(json.loads(args.request))
+if args.adopt_session:
+    if args.session or args.request or args.startup or args.sys_root != Path("/sys"):
+        parser.error("Session adoption only accepts a private native handoff")
+    result = adopt_session(exchange, handoff_location(), location(), Path("/proc/sys/kernel/random/boot_id").read_text().strip())
+elif args.startup:
+    if not args.session or args.request or args.sys_root != Path('/sys'):
+        parser.error("Startup requires a session and the native Portal")
+    result = initialize(exchange, args.session, location())
+elif args.request:
+    request = json.loads(args.request)
+    result = exchange(request)
+    try:
+        remember(location(), request, result)
+    except (OSError, ValueError, KeyError, TypeError):
+        result['preference_error'] = 'Applied, but could not save power/fan preferences'
 else:
     result = Portal(args.sys_root).snapshot()
     if args.session and args.sys_root == Path("/sys") and result["supported"]:

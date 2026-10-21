@@ -67,7 +67,8 @@ Ui.Panel {
         id: monitor
         width: parent.width
         service: root.service
-        foreground: root.barForeground
+        // Popup surfaces must not inherit adaptive transparent-bar text.
+        foreground: Theme.Color.popups.text
         onCloseRequested: root.close()
       }
     }

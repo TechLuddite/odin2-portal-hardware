@@ -24,6 +24,20 @@ def integer(value, low, high):
     return value
 
 
+def plan_power(domains, mode):
+    if mode not in {"saver", "balanced", "performance"}:
+        raise Refused("Unknown Linux power preset")
+    changes = []
+    for domain, spec in domains.items():
+        steps = spec["steps"]
+        fraction = 0.65 if mode == "saver" else (0.85 if mode == "balanced" and domain != "gpu" else 1)
+        maximum = max(x for x in steps if x <= max(steps[0], steps[-1] * fraction))
+        governor = "simple_ondemand" if domain == "gpu" else ("performance" if mode == "performance" else "schedutil")
+        changes += ([("gpu.max", maximum)] if domain == "gpu" else
+                    [(f"{domain}.min", steps[0]), (f"{domain}.max", maximum), (f"{domain}.governor", governor)])
+    return changes
+
+
 class Hardware:
     """Discover exact board interfaces, then address a closed set of logical keys."""
     def __init__(self, root=Path("/sys")):
@@ -255,17 +269,7 @@ class Engine:
                    self.hw.read(key) in entry["allowed"] for key, entry in self.groups[group].items())
 
     def power_changes(self, mode):
-        if mode not in {"saver", "balanced", "performance"}:
-            raise Refused("Unknown Linux power preset")
-        changes = []
-        for domain, spec in self.hw.domains.items():
-            steps = spec["steps"]
-            fraction = 0.65 if mode == "saver" else (0.85 if mode == "balanced" and domain != "gpu" else 1)
-            maximum = max(x for x in steps if x <= max(steps[0], steps[-1] * fraction))
-            governor = "simple_ondemand" if domain == "gpu" else ("performance" if mode == "performance" else "schedutil")
-            changes += ([("gpu.max", maximum)] if domain == "gpu" else
-                        [(f"{domain}.min", steps[0]), (f"{domain}.max", maximum), (f"{domain}.governor", governor)])
-        return changes
+        return plan_power(self.hw.domains, mode)
 
     def request(self, request):
         if not isinstance(request, dict) or not isinstance(request.get("op"), str):

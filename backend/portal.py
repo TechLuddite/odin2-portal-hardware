@@ -84,6 +84,46 @@ class Portal:
             })
         return result
 
+    def storage(self) -> list[dict]:
+        result = []
+        for path in sorted(self.root.joinpath("class/devfreq").glob("*.ufshc")):
+            result.append({"id": path.name, "governor": self.text(path / "governor"),
+                "governors": (self.text(path / "available_governors") or "").split(),
+                "current_mhz": self.number(path / "cur_freq", 1_000_000),
+                "minimum_mhz": self.number(path / "min_freq", 1_000_000),
+                "maximum_mhz": self.number(path / "max_freq", 1_000_000),
+                "available_mhz": self.steps(path / "available_frequencies", 1_000_000)})
+        return result
+
+    @staticmethod
+    def power_presets(cpus, gpus):
+        # Use the actual command planner; generating this preview has no engine,
+        # journal, socket, sysfs writes, or dependency on the selected UI mode.
+        from .controls import plan_power
+        domains = {}
+        for cpu in cpus:
+            if cpu['available_mhz']:
+                domains[cpu['id']] = {'steps': [round(v * 1000) for v in cpu['available_mhz']]}
+        if gpus and gpus[0]['available_mhz']:
+            domains['gpu'] = {'steps': [round(v * 1_000_000) for v in gpus[0]['available_mhz']]}
+        result = []
+        for mode in ('saver', 'balanced', 'performance'):
+            commands = dict(plan_power(domains, mode))
+            rows = []
+            for cpu in cpus:
+                key = cpu['id']
+                rows.append({'id': key, 'cpus': cpu['cpus'],
+                    'minimum_mhz': commands.get(key + '.min', 0) / 1000 if key + '.min' in commands else None,
+                    'maximum_mhz': commands.get(key + '.max', 0) / 1000 if key + '.max' in commands else None,
+                    'governor': commands.get(key + '.governor'),
+                    'behavior': 'requests-ceiling' if mode == 'performance' else 'stepped-scaling',
+                    'minimum_equals_maximum': commands.get(key + '.min') == commands.get(key + '.max') if key + '.min' in commands else None})
+            result.append({'mode': mode, 'cpus': rows,
+                'gpu_maximum_mhz': commands['gpu.max'] / 1_000_000 if 'gpu.max' in commands else None,
+                'gpu_governor': 'unchanged', 'gpu_minimum': 'unchanged',
+                'storage': 'unchanged', 'fan': 'unchanged', 'rgb': 'unchanged'})
+        return result
+
     def fan(self) -> dict:
         matches = [p for p in sorted(self.root.joinpath("class/hwmon").glob("hwmon*"))
                    if self.text(p / "name") == "pwmfan"]
@@ -138,12 +178,14 @@ class Portal:
                   "sampled_at": datetime.now(timezone.utc).isoformat(),
                   "supported": supported, "model": model,
                   "access": "read-only", "controls_available": False,
-                  "cpus": [], "gpus": [], "fan": {"present": False},
+                  "cpus": [], "gpus": [], "storage": [], "power_presets": [], "fan": {"present": False},
                   "thermals": {"cpu_c": None, "gpu_c": None, "battery_c": None, "sensors": []},
                   "battery": {"present": False}}
         if not supported:
             result["reason"] = "This plugin currently supports the AYN Odin 2 Portal."
             return result
-        result.update(cpus=self.cpus(), gpus=self.gpus(), fan=self.fan(),
+        cpus, gpus = self.cpus(), self.gpus()
+        result.update(cpus=cpus, gpus=gpus, storage=self.storage(),
+                      power_presets=self.power_presets(cpus, gpus), fan=self.fan(),
                       thermals=self.thermals(), battery=self.battery())
         return result

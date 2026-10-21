@@ -2,9 +2,10 @@
   "schemaVersion": 1,
   "id": "io.github.techluddite.odin2-portal-hardware",
   "name": "Odin2 Portal Hardware",
-  "version": "0.2.1",
+  "version": "0.3.3",
   "author": "TechLuddite",
   "license": "MIT",
+  "keepLoaded": true,
   "description": "Portal hardware monitoring, session fan controls, Linux CPU/GPU power presets and joystick RGB rings.",
   "kinds": [
     "service",

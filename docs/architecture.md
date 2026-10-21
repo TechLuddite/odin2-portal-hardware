@@ -38,6 +38,16 @@ is fsynced per user transaction, not per fan tick. Restart recovery revalidates
 all saved values and never interprets journal fields as filesystem paths. A new
 boot discards the previous boot's journal without hardware writes.
 
+Version0.3 adds user-owned power/fan preference persistence above that unchanged
+helper. `backend/preferences.py` validates a closed schema and the CLI records
+only successful explicit power/fan changes. At plugin load, initialization uses
+saved choices or Saver/Auto defaults, starting the fan first. It waits for an
+existing lease/recovery, preserves a valid current owned session, and retries
+failed startup at the sampling cadence. If power initialization fails after a
+helper rollback, it independently requests Auto fan before a later retry.
+The manifest retains the service across unrelated plugin rescans. Actual shell
+exit/explicit disable still release it; RGB is not persisted.
+
 Recovery restores only groups still consistent with owned values. Live external
 changes are preserved and reported. Fan recovery at 85°C or unavailable sensors
 keeps full cooling until conditions permit restoration. The daemon can continue
@@ -45,4 +55,4 @@ recovery after a restart; stopping it while hot leaves full fan and its journal.
 See [security](../SECURITY.md) and [installation/recovery](../README.md).
 
 Other devices require explicitly reviewed adapters. Charge limits, animated RGB,
-custom fan curves and automatic persistent boot profiles remain future work.
+custom fan curves and device-independent boot profiles remain future work.

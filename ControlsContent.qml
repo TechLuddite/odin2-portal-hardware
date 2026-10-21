@@ -2,12 +2,15 @@ import QtQuick
 import QtQuick.Layouts
 import qs.Commons as Theme
 import qs.Ui as Ui
+import "Model.js" as Model
 
 ColumnLayout {
   id: root
   property var service: null
   property color foreground: Theme.Color.popups.text
   property string section: "power"
+  property string previewMode: root.state.power_mode || "performance"
+  readonly property var previewPlan: (service?.snapshot?.power_presets || []).find(function(plan) { return plan.mode === root.previewMode })
   property string side: "both"
   property int fanPercent: 40
   property int brightness: 50
@@ -76,10 +79,52 @@ ColumnLayout {
     }
     Text {
       Layout.fillWidth: true
-      text: "Save caps CPU and GPU clocks. Balanced allows CPU scaling with an 85% clock ceiling and the full GPU range. Full enables the CPU performance governor. These are Linux presets."
+      text: "Power levels set CPU ranges/governors and a GPU ceiling. GPU governor, GPU minimum, UFS, fan and RGB stay unchanged. Inspect a level below before applying it above."
       textFormat: Text.PlainText
       wrapMode: Text.Wrap
       color: root.foreground
+      font.family: Theme.Style.font.family
+      font.pixelSize: Theme.Style.font.caption
+    }
+    Ui.PanelSectionHeader { text: "INSPECT A LEVEL · NO CHANGES"; foreground: root.foreground }
+    Ui.ButtonGroup {
+      objectName: "presetPreview"
+      foreground: root.foreground
+      options: [{value: "saver", label: "Save"}, {value: "balanced", label: "Balanced"}, {value: "performance", label: "Full"}]
+      value: root.previewMode
+      onChanged: function(value) { root.previewMode = value }
+    }
+    Text {
+      objectName: "presetDetails"
+      Layout.fillWidth: true
+      text: Model.presetDetails(root.previewPlan, root.service?.snapshot)
+      textFormat: Text.PlainText
+      wrapMode: Text.Wrap
+      color: root.foreground
+      font.family: Theme.Style.font.family
+      font.pixelSize: Theme.Style.font.caption
+    }
+    Ui.PanelSectionHeader { text: "OBSERVED NOW"; foreground: root.foreground }
+    Text {
+      objectName: "liveGovernors"
+      Layout.fillWidth: true
+      text: Model.liveClocks(root.service?.snapshot)
+      textFormat: Text.PlainText
+      wrapMode: Text.Wrap
+      color: root.foreground
+      font.family: Theme.Style.font.family
+      font.pixelSize: Theme.Style.font.caption
+    }
+    Text {
+      objectName: "thermalWarning"
+      Layout.fillWidth: true
+      visible: (Model.temperature(root.service?.snapshot) ?? 0) >= 85
+      text: "Hot: " + Model.format(Model.temperature(root.service?.snapshot), "°C", 1) + ". Fan "
+        + Model.format(root.service?.snapshot?.fan?.duty_percent, "%", 0) + " · "
+        + Model.format(root.service?.snapshot?.fan?.rpm, " RPM", 0) + ". Consider reducing game load or using a lower power level."
+      textFormat: Text.PlainText
+      wrapMode: Text.Wrap
+      color: Theme.Color.urgent
       font.family: Theme.Style.font.family
       font.pixelSize: Theme.Style.font.caption
     }
@@ -153,8 +198,8 @@ ColumnLayout {
     }
     RowLayout {
       Layout.fillWidth: true
-      Ui.Button { objectName: "applyLights"; text: "Apply color"; foreground: root.foreground; focusable: true; enabled: root.ready; onClicked: root.lights(false) }
-      Ui.Button { text: "Lights off"; foreground: root.foreground; focusable: true; enabled: root.ready; onClicked: root.lights(true) }
+      Ui.Button { objectName: "applyLights"; text: "Apply color"; foreground: root.foreground; bordered: true; focusable: true; enabled: root.ready; onClicked: root.lights(false) }
+      Ui.Button { objectName: "lightsOff"; text: "Lights off"; foreground: root.foreground; bordered: true; focusable: true; enabled: root.ready; onClicked: root.lights(true) }
     }
     StatRow { Layout.fillWidth: true; label: "Left applied"; value: root.ringSummary("l"); foreground: root.foreground }
     StatRow { Layout.fillWidth: true; label: "Right applied"; value: root.ringSummary("r"); foreground: root.foreground }
@@ -170,7 +215,7 @@ ColumnLayout {
   }
   Text {
     Layout.fillWidth: true
-    text: "Changes last while this plugin is running. Closing the popup keeps them active. Disabling the plugin or restarting the shell restores the previous settings within 10 seconds."
+    text: "Power and fan choices are remembered. Startup uses Saver and Auto until you save another choice. RGB stays session-only. Closing the popup keeps controls active; disabling the plugin releases them."
     textFormat: Text.PlainText
     wrapMode: Text.Wrap
     color: root.foreground
