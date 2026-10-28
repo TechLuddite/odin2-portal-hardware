@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.4.0 — remembered LEDs and theme colors
+
+- Persist each ring's color, brightness, off state and Manual/Follow theme choice.
+- Restore after plugin startup and resume within the existing owned session.
+- Match light/neutral palettes to white and other accents or explicit stock
+  keyboard hints to the nearest existing color; Tokyo Night maps to purple.
+- Keep off state and brightness through theme changes and handle replacement of
+  the active theme directory. Avoid steady-state writes and blind failure retries.
+- Preserve current readback at guarded upgrade, without new root operations.
+
 ## 0.3.3 — reliable LED brightness transitions
 
 - Turn selected rings off and confirm all selected groups before applying a

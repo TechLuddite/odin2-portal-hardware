@@ -16,7 +16,11 @@ Item {
   property string sessionToken: "portal_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2) + "_panel"
   property var controls: snapshot?.controls ?? ({available: false})
   property string controlError: ""
-  property bool controlling: writer.running || startup.running || bootstrap.running
+  property bool controlling: writer.running || startup.running || bootstrap.running || lightSync.running
+  property bool lightingManaged: startupManaged
+  property var lighting: snapshot?.lighting ?? ({sides: {}})
+  property var lightingCommand: root.controlCommand.concat(["--sync-lights", "--session", root.sessionToken])
+  property bool lightingFailed: false
   property bool startupManaged: true
   property bool handoffManaged: true
   property var handoffCommand: root.controlCommand.concat(["--adopt-session"])
@@ -35,7 +39,8 @@ Item {
     Qt.resolvedUrl("bin/odin2-portal-hardware").toString().replace(/^file:\/\//, ""), "--session", root.sessionToken]
 
   function control(request) {
-    if (writer.running || startup.running || bootstrap.running) return
+    if (root.controlling) return
+    root.lightingFailed = false
     if (request.op === "restore") root.startupSuppressed = true
     request.token = root.sessionToken
     root.requestPayload = JSON.stringify(request)
@@ -78,6 +83,8 @@ Item {
           if (!value.controls.occupied && !value.controls.recovering) startup.running = true
         } else root.startupReady = true
       }
+      if (root.lightingManaged && !root.startupSuppressed && root.startupReady && !root.controlling
+          && !root.lightingFailed && value.lighting?.needs_sync) lightSync.running = true
     } catch (error) {
       root.lastError = "Hardware readings are unavailable."
     }
@@ -117,6 +124,23 @@ Item {
       }
     }
     onExited: if (root.startupReady) root.refresh()
+  }
+  Process {
+    id: lightSync
+    command: root.lightingCommand
+    stdout: StdioCollector {
+      onStreamFinished: {
+        try {
+          var result = JSON.parse(text)
+          root.lightingFailed = !!result.error
+          root.controlError = result.error || ""
+        } catch (error) { root.lightingFailed = true; root.controlError = "Could not restore LED settings" }
+      }
+    }
+    onExited: function(code, status) {
+      if (code !== 0 || status !== 0) { root.lightingFailed = true; root.controlError = "LED synchronization failed" }
+      root.refresh()
+    }
   }
   Timer {
     id: deadline
@@ -166,6 +190,7 @@ Item {
         sampled: root.sampledAt > 0, stale: root.stale, busy: root.busy,
         error: root.lastError, controls_available: root.controls?.available === true,
         controls: root.controls, control_error: root.controlError, startup_ready: root.startupReady,
+        lighting: root.lighting,
         instance_epoch: root.instanceEpoch})
     }
     function control(request: string): void {

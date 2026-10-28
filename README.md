@@ -14,7 +14,7 @@ this implementation contains no copied Decky power/fan code. See
 
 ## Development status
 
-Version 0.3.3 is a local development build with monitoring and **Power, Fan
+Version 0.4.0 is a local development build with monitoring and **Power, Fan
 and Lights** controls. Power presets use advertised Linux CPU/GPU clock steps;
 they are not claimed to reproduce Android's original performance modes. Fan
 control offers Auto, Manual (30–100% duty) and Maximum. Static RGB colors and
@@ -95,7 +95,7 @@ release the lease. The running UI re-establishes saved power/fan choices after
 resume, and a newly loaded plugin does so at login. Unrelated plugin rescans
 retain this service and its lease through `keepLoaded:true`.
 **Restore previous settings** releases all owned controls and suppresses automatic
-initialization for the remainder of that service instance. RGB remains session-only.
+initialization for the remainder of that service instance, including LED restoration.
 A root-owned journal
 recovers partial writes or a daemon restart on the same boot, and ignores stale
 journals from an earlier boot. Writes are checked by reading back the kernel.
@@ -103,6 +103,31 @@ Detected external changes are preserved rather than overwritten.
 
 Successful explicit power/fan changes are stored in the user's private
 `~/.local/state/odin2-portal-hardware/power-fan.json` (or XDG state root).
+
+LED choices are stored independently in private `lights.json` beside that file.
+Each side remembers Manual/Follow theme, RGB channels, brightness and a separate
+on/off choice. Lights off retains the last brightness for the next Apply. A
+guarded upgrade seeds missing LED preferences from actual uniform ring
+readback and selects Follow theme, preserving brightness and off state. When
+adopting initially off rings, the unreadable previous intensity defaults to 50%
+for the next Apply, while the rings remain off. Without
+saved or adopted LED preferences, startup leaves LEDs alone until a choice is made.
+Mixed groups are never flattened into a guessed state.
+
+Follow theme matches the active palette to the existing red, green, blue, purple
+and white choices. Light palettes and neutral accents, including Solitude, use
+white. A matching stock theme's explicit `keyboard.rgb` takes precedence over
+its accent: Tokyo Night's magenta maps to purple. Remaining colors use nearest
+cyclic hue. This is an approximation, not calibrated color reproduction.
+The service reads the current palette afresh at its existing sampling cadence
+(normally three seconds while owned), including after theme-directory replacement.
+Theme changes preserve saved brightness and keep off rings off. Apply color
+selects Manual; in Follow theme, Apply brightness retains theme following.
+Settings are saved only after matching successful readback. Steady state writes
+nothing. Failed automatic synchronization reports an error and pauses until an
+explicit control action or a new service instance; it does not blindly retry.
+LED restoration waits for the existing owned power/fan session and uses the
+unchanged off-first client/helper sequence. No root update or boot service is added.
 Invalid saved data falls back to Saver/Auto without overwriting the bad file.
 Startup waits for another owner's lease/recovery rather than stealing it.
 No extra root operation is added; initialization uses the existing validated

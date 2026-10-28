@@ -10,6 +10,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from backend.portal import Portal
 from backend.client import exchange
 from backend.preferences import initialize, location, remember, adopt_session, handoff_location
+from backend import lighting
 
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument("--sys-root", type=Path, default=Path("/sys"),
@@ -18,18 +19,36 @@ parser.add_argument("--session", help="Renew this panel's existing helper lease 
 parser.add_argument("--request", help="One JSON operation sent to the separately installed helper")
 parser.add_argument("--startup", action="store_true", help="Restore saved power/fan choices, or Saver and Auto defaults")
 parser.add_argument("--adopt-session", action="store_true", help="Consume a private one-time upgrade handoff")
+parser.add_argument("--sync-lights", action="store_true", help="Restore saved LEDs and follow the current theme within an owned session")
 args = parser.parse_args()
 if args.adopt_session:
-    if args.session or args.request or args.startup or args.sys_root != Path("/sys"):
+    if args.session or args.request or args.startup or args.sync_lights or args.sys_root != Path("/sys"):
         parser.error("Session adoption only accepts a private native handoff")
     result = adopt_session(exchange, handoff_location(), location(), Path("/proc/sys/kernel/random/boot_id").read_text().strip())
+    if result.get("adopted"):
+        try:
+            current = exchange(dict(op="status", token=result["token"]))
+            if current.get("owned") and not current.get("error"):
+                lighting.adopt(current, lighting.location())
+        except (OSError, ValueError, KeyError, TypeError):
+            result["preference_error"] = "Could not save current LED settings"
+elif args.sync_lights:
+    if not args.session or args.request or args.startup or args.sys_root != Path('/sys'):
+        parser.error("LED synchronization requires a session and the native Portal")
+    try:
+        result = lighting.apply(exchange, dict(op="sync-lights", token=args.session), lighting.location(), lighting.theme_color())
+    except (OSError, ValueError, KeyError, TypeError):
+        result = {"error": "Could not synchronize saved LED settings"}
 elif args.startup:
     if not args.session or args.request or args.sys_root != Path('/sys'):
         parser.error("Startup requires a session and the native Portal")
     result = initialize(exchange, args.session, location())
 elif args.request:
     request = json.loads(args.request)
-    result = exchange(request)
+    try:
+        result = lighting.apply(exchange, request, lighting.location(), lighting.theme_color()) if request.get("op") in {"rgb", "lighting", "lights-off"} else exchange(request)
+    except (OSError, ValueError, KeyError, TypeError):
+        result = {"error": "Could not apply or save LED settings; check the current readback"}
     try:
         remember(location(), request, result)
     except (OSError, ValueError, KeyError, TypeError):
@@ -40,4 +59,5 @@ else:
         result["controls"] = exchange({"op": "status", "token": args.session})
         result["controls_available"] = result["controls"].get("available", False)
         result["access"] = "session-controls" if result["controls_available"] else "read-only"
+        result["lighting"] = lighting.describe(result["controls"], lighting.location(), lighting.theme_color())
 print(json.dumps(result, allow_nan=False, separators=(",", ":")))

@@ -153,6 +153,18 @@ The user authorizes a local-only source commit if checks and the exact-index
 privacy/media audits pass. No remote, hosted CI, marketplace verification,
 publication or new runtime deployment is part of this checkpoint.
 
+## October 21 LED persistence and theme follow-up
+
+Local 0.4.0 adds per-side LED preferences, theme matching and explicit Manual /
+Follow theme controls. Isolated engine fixtures cover off-state/theme/brightness
+preservation, restart restoration, failed/unowned writes, mixed groups, adoption,
+invalid input and complete palette replacement. `tests/lighting_qml.py` exercises
+real Service process synchronization, failure latching and explicit recovery;
+the existing controls smoke fixture covers the new buttons and saved brightness.
+The parent Portal repository records native validation, deployment and remaining
+physical appearance/startup/resume acceptance. No root helper source change is
+required; retain its original installed hashes.
+
 ## October 21 local 0.3.3 checkpoint
 
 The user requests documentation and a local-only commit after testing. The

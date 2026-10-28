@@ -72,7 +72,7 @@ Item {
         fake_control = root / "fake-control.py"
         fake_control.write_text('''import json, sys
 request = json.loads(sys.argv[-1])
-assert request["op"] in {"power", "fan", "rgb", "restore"}
+assert request["op"] in {"power", "fan", "rgb", "restore", "lighting", "lights-off"}
 print(json.dumps({"available": True, "owned": request["op"] != "restore", "error": "", "power_mode": request.get("mode")}))
 ''')
         command = ["/usr/bin/python3", "-I", "-B", str(root / "bin/odin2-portal-hardware"), "--sys-root", str(sysroot)]
@@ -239,6 +239,29 @@ ShellRoot {
           root.check(JSON.parse(service.requestPayload).blue === 255, "RGB command")
           root.capture("controls-lights", 12, function() { monitor.width = 300 })
         } else if (root.stage === 12) {
+          if (service.controlling) return
+          root.enableControls()
+          root.find(monitor, "lightModes").changed("theme")
+          root.check(JSON.parse(service.requestPayload).mode === "theme", "follow theme sends explicit choice")
+          root.stage = 120
+        } else if (root.stage === 120) {
+          if (service.controlling) return
+          root.enableControls()
+          service.snapshot = Object.assign({}, service.snapshot, {lighting: {theme_color: "white", sides: {
+            left: {mode: "theme", red: 255, green: 255, blue: 255, brightness: 166},
+            right: {mode: "theme", red: 255, green: 255, blue: 255, brightness: 166}}}})
+          root.check(!root.find(monitor, "ringColors").enabled, "theme mode disables manual color picks")
+          root.check(root.find(monitor, "brightnessSlider").value === 65, "saved brightness shown")
+          root.find(monitor, "applyLights").clicked()
+          root.check(JSON.parse(service.requestPayload).op === "lighting", "brightness preserves theme mode")
+          root.stage = 121
+        } else if (root.stage === 121) {
+          if (service.controlling) return
+          root.enableControls()
+          root.find(monitor, "lightsOff").clicked()
+          root.check(JSON.parse(service.requestPayload).op === "lights-off", "off preserves saved color and mode")
+          root.stage = 122
+        } else if (root.stage === 122) {
           if (service.controlling) return
           root.enableControls()
           root.check(root.find(monitor, "ringColors").width <= monitor.width, "narrow color buttons fit")

@@ -46,7 +46,22 @@ existing lease/recovery, preserves a valid current owned session, and retries
 failed startup at the sampling cadence. If power initialization fails after a
 helper rollback, it independently requests Auto fan before a later retry.
 The manifest retains the service across unrelated plugin rescans. Actual shell
-exit/explicit disable still release it; RGB is not persisted.
+exit/explicit disable still release it.
+
+Version 0.4 adds `backend/lighting.py` above the same root API. A separate private,
+closed-schema per-side preference file records RGB channels, brightness and
+Manual/Follow theme. The existing reader describes saved state and a complete
+current palette; it never writes LEDs. A separate Service process serializes
+theme sync and explicit LED actions with an advisory preference lock, verifies
+ownership, computes selected targets and calls the existing off-first RGB client.
+Only settled readback is saved, and matching targets do not generate writes.
+Automatic failures latch visibly until explicit interaction or service reload.
+Startup/resume synchronization waits for power/fan ownership; explicit Restore
+suppresses both initializers. Guarded adoption saves actual uniform ring state
+without writes and preserves any existing manual preference. Each side is a
+separate acknowledged operation; a later-side failure can leave an earlier side
+applied, and is reported rather than claimed atomic. Root journaling and external
+change refusal remain authoritative.
 
 Recovery restores only groups still consistent with owned values. Live external
 changes are preserved and reported. Fan recovery at 85°C or unavailable sensors

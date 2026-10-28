@@ -16,11 +16,36 @@ ColumnLayout {
   property int brightness: 50
   property string colorName: "blue"
   property var colors: ({red: [255,0,0], green: [0,255,0], blue: [0,0,255], purple: [180,0,255], white: [255,255,255]})
+  readonly property var savedLights: service?.lighting?.sides ?? ({})
+  readonly property string lightMode: root.side === "both"
+    ? (root.savedLights.left?.mode === root.savedLights.right?.mode ? (root.savedLights.left?.mode || "manual") : "mixed")
+    : (root.savedLights[root.side]?.mode || "manual")
+  property string lastSelection: ""
+  function selection() {
+    var saved = root.savedLights[root.side === "both" ? "left" : root.side]
+    var key = root.side + JSON.stringify(saved)
+    if (key === root.lastSelection) return
+    root.lastSelection = key
+    if (!saved) return
+    root.brightness = Math.round(saved.brightness / 255 * 100)
+    for (var name in root.colors) {
+      var c = root.colors[name]
+      if (saved.red === c[0] && saved.green === c[1] && saved.blue === c[2]) root.colorName = name
+    }
+  }
+  onSavedLightsChanged: root.selection()
+  onSideChanged: root.selection()
+  Component.onCompleted: root.selection()
   readonly property var state: service?.controls ?? ({available: false})
   readonly property bool ready: state.available === true && !state.occupied && !state.recovering && !service?.controlling
   spacing: Theme.Style.space(10)
   function send(request) { if (root.ready && root.service) root.service.control(request) }
   function lights(off) {
+    if (off) { root.send({op: "lights-off", side: root.side}); return }
+    if (root.lightMode === "theme") {
+      root.send({op: "lighting", side: root.side, mode: "theme", brightness: Math.round(root.brightness * 255 / 100)})
+      return
+    }
     var rgb = root.colors[root.colorName]
     root.send({op: "rgb", side: root.side, red: rgb[0], green: rgb[1], blue: rgb[2],
       brightness: off ? 0 : Math.round(root.brightness * 255 / 100)})
@@ -176,13 +201,23 @@ ColumnLayout {
       onChanged: function(value) { root.side = value }
     }
     Ui.ButtonGroup {
+      objectName: "lightModes"
+      foreground: root.foreground
+      enabled: root.ready
+      options: [{value: "manual", label: "Manual"}, {value: "theme", label: "Follow theme"}]
+      value: root.lightMode
+      onChanged: function(value) { root.send({op: "lighting", side: root.side, mode: value}) }
+    }
+    Ui.ButtonGroup {
       objectName: "ringColors"
+      enabled: root.lightMode !== "theme"
       foreground: root.foreground
       options: [{value: "red", label: "Red"}, {value: "green", label: "Green"}, {value: "blue", label: "Blue"}]
       value: root.colorName
       onChanged: function(value) { root.colorName = value }
     }
     Ui.ButtonGroup {
+      enabled: root.lightMode !== "theme"
       foreground: root.foreground
       options: [{value: "purple", label: "Purple"}, {value: "white", label: "White"}]
       value: root.colorName
@@ -198,11 +233,20 @@ ColumnLayout {
     }
     RowLayout {
       Layout.fillWidth: true
-      Ui.Button { objectName: "applyLights"; text: "Apply color"; foreground: root.foreground; bordered: true; focusable: true; enabled: root.ready; onClicked: root.lights(false) }
+      Ui.Button { objectName: "applyLights"; text: root.lightMode === "theme" ? "Apply brightness" : "Apply color"; foreground: root.foreground; bordered: true; focusable: true; enabled: root.ready; onClicked: root.lights(false) }
       Ui.Button { objectName: "lightsOff"; text: "Lights off"; foreground: root.foreground; bordered: true; focusable: true; enabled: root.ready; onClicked: root.lights(true) }
     }
     StatRow { Layout.fillWidth: true; label: "Left applied"; value: root.ringSummary("l"); foreground: root.foreground }
     StatRow { Layout.fillWidth: true; label: "Right applied"; value: root.ringSummary("r"); foreground: root.foreground }
+    Text {
+      Layout.fillWidth: true
+      text: "Follow theme uses the closest supported color (" + (root.service?.lighting?.theme_color || "unavailable") + "). Light and neutral themes use white. Theme changes keep brightness and lights-off choices."
+      textFormat: Text.PlainText
+      wrapMode: Text.Wrap
+      color: root.foreground
+      font.family: Theme.Style.font.family
+      font.pixelSize: Theme.Style.font.caption
+    }
   }
   Ui.PanelSeparator { Layout.fillWidth: true; foreground: root.foreground }
   Ui.Button {
@@ -215,7 +259,7 @@ ColumnLayout {
   }
   Text {
     Layout.fillWidth: true
-    text: "Power and fan choices are remembered. Startup uses Saver and Auto until you save another choice. RGB stays session-only. Closing the popup keeps controls active; disabling the plugin releases them."
+    text: "Power, fan and LED choices are remembered. Startup uses Saver and Auto until you save another choice. Closing the popup keeps controls active; disabling the plugin releases them."
     textFormat: Text.PlainText
     wrapMode: Text.Wrap
     color: root.foreground
