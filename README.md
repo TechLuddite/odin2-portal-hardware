@@ -14,10 +14,13 @@ this implementation contains no copied Decky power/fan code. See
 
 ## Development status
 
-Version 0.4.2 is a local development build with monitoring and **Power, Fan
-and Lights** controls. Power presets use advertised Linux CPU/GPU clock steps;
+Version 0.4.2 is a development build with monitoring and **Power, Fan
+and Lights** controls. It is published for review and testing and is not
+listed in the Omarchy plugin marketplace. Power presets use advertised Linux CPU/GPU clock steps;
 they are not claimed to reproduce Android's original performance modes. Fan
-control offers Auto, Manual (30–100% duty) and Maximum. Static RGB colors and
+control offers Auto, Manual (30–100% duty) and Maximum where the plugin owns
+the fan. Under mainline Linux a kernel thermal zone drives the fan and the
+Fan tab shows that instead. Static RGB colors and
 brightness can be applied to either joystick ring or both. Nonzero RGB updates
 first turn the selected rings off, confirm that state, then apply the requested
 color and brightness through the existing helper. This avoids an observed
@@ -42,7 +45,7 @@ guarantee; missing or implausible sensor values remain unavailable.
 
 ## Local development installation
 
-The repository has not been published. Local test installation is recorded separately; see [the installation record](docs/development.md#october-20-local-portal-test-installation).
+Installation on the maintainer's Portal is recorded in [the installation record](docs/development.md#october-20-local-portal-test-installation).
 Validate a checkout before another local installation:
 
 ```sh
