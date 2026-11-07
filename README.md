@@ -14,7 +14,7 @@ this implementation contains no copied Decky power/fan code. See
 
 ## Development status
 
-Version 0.4.0 is a local development build with monitoring and **Power, Fan
+Version 0.4.1 is a local development build with monitoring and **Power, Fan
 and Lights** controls. Power presets use advertised Linux CPU/GPU clock steps;
 they are not claimed to reproduce Android's original performance modes. Fan
 control offers Auto, Manual (30–100% duty) and Maximum. Static RGB colors and

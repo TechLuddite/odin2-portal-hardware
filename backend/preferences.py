@@ -73,17 +73,21 @@ def initialize(exchange, token, path):
     current = exchange({"op": "status", "token": token})
     if not current.get("available") or current.get("occupied") or current.get("recovering") or current.get("error"):
         return dict(current, startup="waiting", preference_source=origin)
+    # A kernel thermal zone drives the fan on mainline. The saved fan choice
+    # stays on disk for kernels where the helper owns the fan again.
+    kernel_fan = current.get("fan_owner") == "kernel"
     # A valid active session is already initialized; never reset a user's newer choice.
-    if current.get("owned") and current.get("fan_mode") and current.get("power_mode"):
+    if current.get("owned") and current.get("power_mode") and (kernel_fan or current.get("fan_mode")):
         return dict(current, startup="ready", preference_source=origin)
-    requests = [{"op": "fan", "mode": preferences["fan"], "percent": preferences["fan_percent"], "token": token},
-                {"op": "power", "mode": preferences["power"], "token": token}]
+    requests = [] if kernel_fan else [
+        {"op": "fan", "mode": preferences["fan"], "percent": preferences["fan_percent"], "token": token}]
+    requests.append({"op": "power", "mode": preferences["power"], "token": token})
     for request in requests:
         current = exchange(request)
         if not current.get("owned") or current.get("error"):
             # A failed power transaction may restore all groups. Re-establish
             # safe Auto fan independently, then retry the whole startup later.
-            if request["op"] == "power":
+            if request["op"] == "power" and not kernel_fan:
                 exchange({"op": "fan", "mode": "auto", "percent": 40, "token": token})
             return dict(current, startup="waiting", preference_source=origin)
     return dict(current, startup="ready", preference_source=origin)

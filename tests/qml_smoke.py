@@ -214,13 +214,9 @@ ShellRoot {
           root.stage++
         } else if (root.stage === 9) {
           root.check(root.find(monitor, "powerPresets").enabled, "helper enables power presets")
-          var originalRequest = service.requestPayload
-          root.find(monitor, "presetPreview").changed("saver")
-          root.check(service.requestPayload === originalRequest, "preview never dispatches controls")
-          root.check(root.find(monitor, "presetDetails").text.indexOf("Minimum equals maximum: fixed range.") !== -1, "Save detects a fixed range when advertised steps require it")
-          root.find(monitor, "presetPreview").changed("performance")
-          root.check(root.find(monitor, "presetDetails").text.indexOf("minimum is not pinned") !== -1, "Full describes request versus pin")
-          root.check(root.find(monitor, "presetDetails").text.indexOf("Governor unchanged") !== -1, "GPU unchanged fields explicit")
+          var table = root.find(monitor, "presetTable")
+          root.check(table.columns === root.find(monitor, "hardwareControls").presetColumns.length, "table has a column per CPU cluster plus level and GPU")
+          root.check(root.find(monitor, "hardwareControls").presetRows.length === 3, "table has one row per level")
           root.check(root.find(monitor, "liveGovernors").text.indexOf("UFS: Performance · 300 MHz") !== -1, "trial governor visible separately")
           root.check(root.find(monitor, "thermalWarning").visible, "hot CPU warning visible")
           root.find(monitor, "powerPresets").changed("saver")

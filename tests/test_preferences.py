@@ -88,6 +88,37 @@ class StartupPreferencesTests(unittest.TestCase):
         self.assertEqual([c['op'] for c in calls], ['status','fan','power','fan'])
         self.assertEqual(calls[-1]['mode'],'auto')
 
+    def kernel_fan(self):
+        zone = self.root / 'sys/class/thermal/thermal_zone15'
+        device = self.root / 'sys/class/thermal/cooling_device4'
+        device.mkdir(parents=True)
+        (device / 'type').write_text('pwm-fan')
+        zone.mkdir(parents=True, exist_ok=True)
+        (zone / 'cdev0').symlink_to(device)
+
+    def test_kernel_owned_fan_is_reported_and_startup_applies_power_only(self):
+        self.kernel_fan()
+        save(self.path, dict(DEFAULT, power='performance', fan='manual', fan_percent=65))
+        calls = []
+        def exchange(request):
+            calls.append(request['op'])
+            return self.engine.request(request)
+        result = initialize(exchange, TOKEN, self.path)
+        self.assertEqual(result['startup'], 'ready')
+        self.assertEqual(result['fan_owner'], 'kernel')
+        self.assertEqual(calls, ['status', 'power'])
+        self.assertEqual(result['power_mode'], 'performance')
+        # The saved fan choice is kept for kernels where the helper owns the fan.
+        self.assertEqual(load(self.path)[0]['fan'], 'manual')
+        # A later startup check is already ready and changes nothing.
+        calls.clear()
+        self.assertEqual(initialize(exchange, TOKEN, self.path)['startup'], 'ready')
+        self.assertEqual(calls, ['status'])
+
+    def test_helper_owned_fan_is_reported(self):
+        status = self.engine.request(dict(op='status', token=TOKEN))
+        self.assertEqual(status['fan_owner'], 'helper')
+
     def test_one_time_handoff_preserves_current_session_without_hardware_writes(self):
         self.engine.request(dict(op='fan',token=TOKEN,mode='manual',percent=65))
         self.engine.request(dict(op='power',token=TOKEN,mode='balanced'))

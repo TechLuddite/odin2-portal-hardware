@@ -9,8 +9,8 @@ ColumnLayout {
   property var service: null
   property color foreground: Theme.Color.popups.text
   property string section: "power"
-  property string previewMode: root.state.power_mode || "performance"
-  readonly property var previewPlan: (service?.snapshot?.power_presets || []).find(function(plan) { return plan.mode === root.previewMode })
+  readonly property var presetRows: Model.presetTable(service?.snapshot?.power_presets)
+  readonly property var presetColumns: Model.presetColumns(service?.snapshot?.power_presets)
   property string side: "both"
   property int fanPercent: 40
   property int brightness: 50
@@ -38,6 +38,7 @@ ColumnLayout {
   Component.onCompleted: root.selection()
   readonly property var state: service?.controls ?? ({available: false})
   readonly property bool ready: state.available === true && !state.occupied && !state.recovering && !service?.controlling
+  readonly property bool kernelFan: state.fan_owner === "kernel"
   spacing: Theme.Style.space(10)
   function send(request) { if (root.ready && root.service) root.service.control(request) }
   function lights(off) {
@@ -102,30 +103,50 @@ ColumnLayout {
       value: root.state.power_mode || ""
       onChanged: function(value) { root.send({op: "power", mode: value}) }
     }
+    Ui.PanelSectionHeader { text: "CEILINGS · CPU GHz · GPU MHz"; foreground: root.foreground }
+    GridLayout {
+      objectName: "presetTable"
+      Layout.fillWidth: true
+      columns: root.presetColumns.length
+      columnSpacing: Theme.Style.space(8)
+      rowSpacing: Theme.Style.space(4)
+      Repeater {
+        model: root.presetColumns
+        Text {
+          required property string modelData
+          Layout.fillWidth: true
+          text: modelData
+          textFormat: Text.PlainText
+          color: root.foreground
+          opacity: 0.7
+          font.family: Theme.Style.font.family
+          font.pixelSize: Theme.Style.font.caption
+        }
+      }
+      Repeater {
+        model: root.presetRows.reduce(function(cells, row) {
+          return cells.concat([{text: row.label, active: row.mode === root.state.power_mode}].concat(
+            row.cells.map(function(cell) { return {text: cell, active: row.mode === root.state.power_mode} })))
+        }, [])
+        Text {
+          required property var modelData
+          Layout.fillWidth: true
+          text: modelData.text
+          textFormat: Text.PlainText
+          color: modelData.active ? Theme.Color.accent : root.foreground
+          font.bold: modelData.active
+          font.family: Theme.Style.font.family
+          font.pixelSize: Theme.Style.font.caption
+        }
+      }
+    }
     Text {
       Layout.fillWidth: true
-      text: "Power levels set CPU ranges/governors and a GPU ceiling. GPU governor, GPU minimum, UFS, fan and RGB stay unchanged. Inspect a level below before applying it above."
+      text: "Full also runs the CPUs on the performance governor."
       textFormat: Text.PlainText
       wrapMode: Text.Wrap
       color: root.foreground
-      font.family: Theme.Style.font.family
-      font.pixelSize: Theme.Style.font.caption
-    }
-    Ui.PanelSectionHeader { text: "INSPECT A LEVEL · NO CHANGES"; foreground: root.foreground }
-    Ui.ButtonGroup {
-      objectName: "presetPreview"
-      foreground: root.foreground
-      options: [{value: "saver", label: "Save"}, {value: "balanced", label: "Balanced"}, {value: "performance", label: "Full"}]
-      value: root.previewMode
-      onChanged: function(value) { root.previewMode = value }
-    }
-    Text {
-      objectName: "presetDetails"
-      Layout.fillWidth: true
-      text: Model.presetDetails(root.previewPlan, root.service?.snapshot)
-      textFormat: Text.PlainText
-      wrapMode: Text.Wrap
-      color: root.foreground
+      opacity: 0.7
       font.family: Theme.Style.font.family
       font.pixelSize: Theme.Style.font.caption
     }
@@ -159,9 +180,20 @@ ColumnLayout {
     Layout.fillWidth: true
     spacing: Theme.Style.space(8)
     Ui.PanelSectionHeader { text: "FAN CONTROL"; foreground: root.foreground }
+    Text {
+      objectName: "kernelFanNote"
+      visible: root.kernelFan
+      Layout.fillWidth: true
+      text: "This kernel drives the fan from its thermal zones. Fan modes are unavailable until manual control is added."
+      textFormat: Text.PlainText
+      wrapMode: Text.Wrap
+      color: root.foreground
+      font.family: Theme.Style.font.family
+      font.pixelSize: Theme.Style.font.caption
+    }
     Ui.ButtonGroup {
       objectName: "fanModes"
-      enabled: root.ready
+      enabled: root.ready && !root.kernelFan
       foreground: root.foreground
       options: [{value: "auto", label: "Auto"}, {value: "manual", label: "Manual"}, {value: "max", label: "Maximum"}]
       value: root.state.fan_mode || ""
@@ -171,7 +203,7 @@ ColumnLayout {
     Ui.PanelSlider {
       objectName: "fanSlider"
       Layout.fillWidth: true
-      enabled: root.ready
+      enabled: root.ready && !root.kernelFan
       minimum: 30; maximum: 100; integer: true; step: 5
       value: root.fanPercent
       onMoved: function(value) { root.fanPercent = Math.round(value) }

@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "io.github.techluddite.odin2-portal-hardware",
   "name": "Odin2 Portal Hardware",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "author": "TechLuddite",
   "license": "MIT",
   "keepLoaded": true,

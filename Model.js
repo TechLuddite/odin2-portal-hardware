@@ -19,25 +19,25 @@ function temperature(snapshot) {
 
 function mhz(value) { return format(value, " MHz", value % 1 ? 1 : 0) }
 function range(minimum, maximum) { return mhz(minimum) + " – " + mhz(maximum) }
-function presetDetails(plan, snapshot) {
-  if (!plan) return "Advertised preset data is unavailable."
-  var lines = []
-  for (var cpu of plan.cpus || []) {
-    lines.push("CPU " + (cpu.cpus || []).join(", ") + " · " + governor(cpu.governor)
-      + "\n" + range(cpu.minimum_mhz, cpu.maximum_mhz) + " · hard ceiling " + mhz(cpu.maximum_mhz)
-      + "\n" + (cpu.minimum_equals_maximum ? "Minimum equals maximum: fixed range."
-        : cpu.behavior === "requests-ceiling" ? "Requests the ceiling; minimum is not pinned to maximum."
-        : "Scales through advertised steps with load."))
-  }
-  var gpu = (snapshot?.gpus || [])[0]
-  lines.push("GPU · hard ceiling " + mhz(plan.gpu_maximum_mhz)
-    + "\nGovernor unchanged (now " + governor(gpu?.governor) + "); minimum unchanged (now " + mhz(gpu?.minimum_mhz) + ").")
-  var storage = (snapshot?.storage || [])[0]
-  lines.push("UFS storage · unchanged by this level"
-    + (storage ? "\n" + governor(storage.governor) + " · " + range(storage.minimum_mhz, storage.maximum_mhz)
-      + "\nAdvertised steps: " + storage.available_mhz.map(function(v) { return mhz(v) }).join(", ") : "\nLive storage data unavailable."))
-  lines.push("Fan mode and RGB are unchanged by power levels. Thermal and other hardware limits can override clock requests.")
-  return lines.join("\n\n")
+function ceiling(value, unit) {
+  if (value === null || value === undefined) return "—"
+  return unit === "GHz" ? (value / 1000).toFixed(2) : String(Math.round(value))
+}
+// One row per level: CPU cluster ceilings in GHz, then the GPU ceiling in MHz.
+function presetTable(presets) {
+  var labels = {saver: "Save", balanced: "Balanced", performance: "Full"}
+  return (presets || []).map(function(plan) {
+    return {mode: plan.mode, label: labels[plan.mode] || plan.mode,
+      cells: (plan.cpus || []).map(function(cpu) { return ceiling(cpu.maximum_mhz, "GHz") })
+        .concat([ceiling(plan.gpu_maximum_mhz, "MHz")])}
+  })
+}
+function presetColumns(presets) {
+  var first = (presets || [])[0]
+  return ["Level"].concat((first?.cpus || []).map(function(cpu) {
+    var ids = cpu.cpus || []
+    return "CPU " + (ids.length > 1 ? ids[0] + "–" + ids[ids.length - 1] : ids[0])
+  })).concat(["GPU"])
 }
 function liveClocks(snapshot) {
   var lines = []

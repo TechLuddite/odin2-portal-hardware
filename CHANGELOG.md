@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.4.1: kernel fan control and a levels table
+
+- Detect when a kernel thermal zone drives the fan (mainline Linux device
+  tree) and report it as `fan_owner`. Startup then restores the power level
+  alone and stops retrying the fan, which made power buttons need a second
+  press. The saved fan choice is kept for kernels where the helper owns it.
+- The Fan tab shows kernel control as information and disables fan modes.
+- Replace the power level explanation and preview buttons with one table of
+  CPU and GPU ceilings per level, highlighting the active level.
+
 ## 0.4.0 — remembered LEDs and theme colors
 
 - Persist each ring's color, brightness, off state and Manual/Follow theme choice.

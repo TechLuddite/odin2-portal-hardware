@@ -152,12 +152,18 @@ class Hardware:
     def rpm(self):
         return self.portal.number(self.rpm_path)
 
+    def fan_owner(self):
+        """'kernel' when a thermal zone drives the fan (mainline DT), else 'helper'."""
+        for zone in (self.root / "class/thermal").glob("thermal_zone*"):
+            for link in zone.glob("cdev[0-9]*"):
+                if link.is_symlink() and self.portal.text(link / "type") == "pwm-fan":
+                    return "kernel"
+        return "helper"
+
     def claimable(self, group):
         if group == "fan":
-            for zone in (self.root / "class/thermal").glob("thermal_zone*"):
-                for link in zone.glob("cdev[0-9]*"):
-                    if link.is_symlink() and self.portal.text(link / "type") == "pwm-fan":
-                        raise Refused("The kernel thermal controller owns this fan")
+            if self.fan_owner() == "kernel":
+                raise Refused("The kernel thermal controller owns this fan")
             if self.read("fan.enable") != "1":
                 raise Refused("Fan enable mode changed; refusing competing control")
         if group in {"left", "right"}:
@@ -338,7 +344,7 @@ class Engine:
     def status(self, token):
         return {"available": True, "owned": self.owner == token,
                 "occupied": self.owner is not None and self.owner != token,
-                "fan_mode": self.fan_mode, "fan_percent": self.fan_percent,
+                "fan_mode": self.fan_mode, "fan_percent": self.fan_percent, "fan_owner": self.hw.fan_owner(),
                 "power_mode": self.power_mode, "changed_groups": list(self.groups),
                 "recovering": self.owner is None and bool(self.groups), "error": self.error,
                 "rings": {key: {"channels": dict(zip(self.hw.indices[key], map(int, self.hw.read(key + ".color").split()))),
