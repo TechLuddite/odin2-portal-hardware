@@ -9,8 +9,8 @@ ColumnLayout {
   property var service: null
   property color foreground: Theme.Color.popups.text
   property string section: "power"
-  readonly property var presetRows: Model.presetTable(service?.snapshot?.power_presets)
-  readonly property var presetColumns: Model.presetColumns(service?.snapshot?.power_presets)
+  readonly property var presetRows: Model.presetTable(service?.snapshot?.power_presets, service?.snapshot?.storage)
+  readonly property var presetColumns: Model.presetColumns(service?.snapshot?.power_presets, service?.snapshot?.storage)
   property string side: "both"
   property int fanPercent: 40
   property int brightness: 50
@@ -103,7 +103,7 @@ ColumnLayout {
       value: root.state.power_mode || ""
       onChanged: function(value) { root.send({op: "power", mode: value}) }
     }
-    Ui.PanelSectionHeader { text: "CEILINGS · CPU GHz · GPU MHz"; foreground: root.foreground }
+    Ui.PanelSectionHeader { text: "CEILINGS · CPU GHz · GPU AND UFS MHz"; foreground: root.foreground }
     GridLayout {
       objectName: "presetTable"
       Layout.fillWidth: true
@@ -142,7 +142,7 @@ ColumnLayout {
     }
     Text {
       Layout.fillWidth: true
-      text: "Full also runs the CPUs on the performance governor."
+      text: "Full also runs the CPUs on the performance governor. Levels do not change UFS storage."
       textFormat: Text.PlainText
       wrapMode: Text.Wrap
       color: root.foreground
@@ -288,14 +288,5 @@ ColumnLayout {
     focusable: true
     enabled: root.state.available && !root.state.occupied && !root.service?.controlling
     onClicked: if (root.service) root.service.control({op: "restore"})
-  }
-  Text {
-    Layout.fillWidth: true
-    text: "Power, fan and LED choices are remembered. Startup uses Saver and Auto until you save another choice. Closing the popup keeps controls active; disabling the plugin releases them."
-    textFormat: Text.PlainText
-    wrapMode: Text.Wrap
-    color: root.foreground
-    font.family: Theme.Style.font.family
-    font.pixelSize: Theme.Style.font.caption
   }
 }

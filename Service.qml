@@ -78,7 +78,9 @@ Item {
       root.lastError = ""
       if (root.startupManaged && !root.startupSuppressed && value.supported && value.controls?.available
           && !writer.running && !startup.running) {
-        if (!value.controls.owned || !value.controls.fan_mode || !value.controls.power_mode) {
+        // A kernel thermal zone may own the fan (mainline Linux); power alone is then the restored state.
+        if (!value.controls.owned || !value.controls.power_mode
+            || (value.controls.fan_owner !== "kernel" && !value.controls.fan_mode)) {
           root.startupReady = false
           if (!value.controls.occupied && !value.controls.recovering) startup.running = true
         } else root.startupReady = true

@@ -14,7 +14,7 @@ this implementation contains no copied Decky power/fan code. See
 
 ## Development status
 
-Version 0.4.1 is a local development build with monitoring and **Power, Fan
+Version 0.4.2 is a local development build with monitoring and **Power, Fan
 and Lights** controls. Power presets use advertised Linux CPU/GPU clock steps;
 they are not claimed to reproduce Android's original performance modes. Fan
 control offers Auto, Manual (30–100% duty) and Maximum. Static RGB colors and
@@ -94,6 +94,12 @@ heartbeat restores the captured settings within 10 seconds. Suspend gaps also
 release the lease. The running UI re-establishes saved power/fan choices after
 resume, and a newly loaded plugin does so at login. Unrelated plugin rescans
 retain this service and its lease through `keepLoaded:true`.
+
+Power, fan and LED choices are remembered. Startup uses Saver and Auto until
+you save another choice. When a kernel thermal zone drives the fan (mainline
+Linux), startup restores the power level alone and the Fan tab shows the
+kernel control. **Restore previous settings** returns every changed setting
+to its value from before the plugin took control.
 **Restore previous settings** releases all owned controls and suppresses automatic
 initialization for the remainder of that service instance, including LED restoration.
 A root-owned journal

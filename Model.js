@@ -24,20 +24,23 @@ function ceiling(value, unit) {
   return unit === "GHz" ? (value / 1000).toFixed(2) : String(Math.round(value))
 }
 // One row per level: CPU cluster ceilings in GHz, then the GPU ceiling in MHz.
-function presetTable(presets) {
+// Levels leave UFS storage alone, so its column shows the live ceiling.
+function presetTable(presets, storage) {
   var labels = {saver: "Save", balanced: "Balanced", performance: "Full"}
+  var ufs = (storage || [])[0]
   return (presets || []).map(function(plan) {
     return {mode: plan.mode, label: labels[plan.mode] || plan.mode,
       cells: (plan.cpus || []).map(function(cpu) { return ceiling(cpu.maximum_mhz, "GHz") })
-        .concat([ceiling(plan.gpu_maximum_mhz, "MHz")])}
+        .concat([ceiling(plan.gpu_maximum_mhz, "MHz")])
+        .concat(ufs ? [ceiling(ufs.maximum_mhz, "MHz")] : [])}
   })
 }
-function presetColumns(presets) {
+function presetColumns(presets, storage) {
   var first = (presets || [])[0]
   return ["Level"].concat((first?.cpus || []).map(function(cpu) {
     var ids = cpu.cpus || []
     return "CPU " + (ids.length > 1 ? ids[0] + "–" + ids[ids.length - 1] : ids[0])
-  })).concat(["GPU"])
+  })).concat(["GPU"]).concat((storage || []).length ? ["UFS"] : [])
 }
 function liveClocks(snapshot) {
   var lines = []

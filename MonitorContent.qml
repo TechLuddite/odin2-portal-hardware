@@ -33,15 +33,6 @@ FocusScope {
         font.bold: true
       }
       Ui.PanelActionButton {
-        objectName: "refreshButton"
-        foreground: root.foreground
-        iconText: "󰑐"
-        tooltipText: "Refresh readings"
-        focusable: true
-        enabled: !root.service?.busy
-        onClicked: if (root.service) root.service.refresh()
-      }
-      Ui.PanelActionButton {
         foreground: root.foreground
         iconText: "󰅖"
         tooltipText: "Close"

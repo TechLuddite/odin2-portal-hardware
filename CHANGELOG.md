@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.4.2: startup loop fix
+
+- Fix a startup loop when the kernel owns the fan: the service also required
+  a fan mode before treating startup as done, so it reran startup on every
+  refresh and kept the controls busy. Power buttons did not respond and the
+  refresh indicator flashed.
+- Remove the refresh button. Readings refresh on their own.
+- Move the remembered-settings note from the panel to the README.
+- Add the live UFS storage ceiling to the levels table.
+- The startup QML test now requires readiness to hold, and covers the
+  kernel-owned fan.
+
 ## 0.4.1: kernel fan control and a levels table
 
 - Detect when a kernel thermal zone drives the fan (mainline Linux device
