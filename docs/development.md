@@ -191,3 +191,34 @@ the earlier Full/Max/green probe restoration.
 
 This section is a source documentation update only. The installed 58-file
 receipt remains frozen; do not redeploy solely to synchronize this paragraph.
+
+## 0.4.1 and 0.4.2: kernel-owned fan (2026-11-07)
+
+The Portal moved to mainline Linux 7.4-rc1, whose device tree binds the fan to
+thermal zone `cpu7-bottom-thermal` (step_wise, active trips 50 to 85 °C). The
+helper detects a `pwm-fan` cooling device linked from any thermal zone and
+reports `fan_owner: kernel` in its status. Startup then restores the power
+level alone and keeps the saved fan choice on disk for kernels where the helper
+owns the fan again. The Fan tab shows the kernel control and disables its
+modes.
+
+0.4.1 fixed this in `backend/preferences.py` but missed the same readiness
+check in `Service.qml`, so startup reran on every refresh, the controls stayed
+busy and power buttons needed a second press. 0.4.2 fixes the QML check and
+hardens `tests/startup_qml.py` to require readiness to hold for 1.5 s; it fails
+against 0.4.1's `Service.qml`. 0.4.2 also removes the refresh button, moves the
+remembered-settings note to the README and shows the power levels as a table
+of CPU, GPU and UFS ceilings.
+
+91 unit tests and the hardware, startup and lighting QML suites pass on the
+Portal. The root helper was reinstalled for `fan_owner` (installer backup
+`/var/lib/odin2-portal-hardware/installations/20261107T225708Z`). Operator
+confirmed single-press power levels on 0.4.2.
+
+Open:
+
+- Manual fan control when the kernel owns the fan. Candidate: set the owning
+  thermal zone's `mode` to `disabled` while Manual or Max is active, drive
+  `pwm1` from the helper, and re-enable the zone on release, suspend, helper
+  exit and above the hot limit. Tracked as backlog H8 in the Portal project.
+- Hosted CI and publication remain pending; the repository has no remote.
