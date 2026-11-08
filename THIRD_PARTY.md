@@ -44,6 +44,6 @@ workflow; the runtime implementation is original to this repository. Exact
 reviewed repositories, commits and file hashes are in
 [repository-conventions.json](docs/repository-conventions.json).
 
-Preview media use actual installed Omarchy components and theme tokens with
-synthetic sensor readings. Original theme files and wallpapers are not bundled
-as separate assets; see [media details](docs/media/README.md).
+Screenshots show the plugin on the maintainer's Portal with Omarchy's Tokyo
+Night theme colours, cropped to the panel. No wallpaper or theme file is
+included; see [media details](docs/media/README.md).

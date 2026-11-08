@@ -4,13 +4,25 @@ A native Omarchy hardware panel for the **AYN Odin 2 Portal**. It shows the
 hottest CPU/GPU sensors, fan RPM and PWM duty, CPU/GPU clocks and governors,
 and battery status, power and temperature.
 
-![Odin2 Portal Hardware overview in Hackerman, with synthetic readings](preview.png)
+![Odin2 Portal Hardware overview on an AYN Odin 2 Portal](preview.png)
 
 Built on [Omarchy](https://github.com/omacom/omarchy)'s actual Commons/Ui kit.
 The device-control design research credits MaSi/SteamOS-Ubuntu, Basit and
 Hooandee's Panel de Control. Related Omarchy panels informed the design review;
 this implementation contains no copied Decky power/fan code. See
 [credits and provenance](THIRD_PARTY.md).
+
+## Screenshots
+
+Captured on an AYN Odin 2 Portal running mainline Linux 7.4-rc1 (2026-11-07).
+
+| Overview | Power | Fan |
+| --- | --- | --- |
+| ![Overview tab](docs/media/overview.png) | ![Power levels table](docs/media/controls-power.png) | ![Fan tab with kernel fan control](docs/media/controls-fan.png) |
+
+| Lights | Clocks | Sensors |
+| --- | --- | --- |
+| ![Joystick ring lights](docs/media/controls-lights.png) | ![Clock details](docs/media/details-clocks.png) | ![Sensor details](docs/media/details-sensors.png) |
 
 ## Development status
 
@@ -206,10 +218,8 @@ pushes. Actions have read-only repository permissions and immutable pins.
 The installed-Omarchy QML fixture is a separate local check. Configured workflows
 are not evidence of hosted CI success or marketplace verification.
 
-Preview assets render actual plugin components with synthetic sensor values in
-an isolated environment. They contain no personal windows or hardware capture
-and do not establish physical acceptance. Runtime code is not restyled for them.
-See the [light and dark theme examples](docs/media/README.md).
+Screenshots are live captures from the maintainer's Portal, cropped to the
+panel. See [preview-media details](docs/media/README.md).
 
 Report security issues privately as described in [SECURITY.md](SECURITY.md).
 MIT; see [LICENSE](LICENSE) and [THIRD_PARTY.md](THIRD_PARTY.md).

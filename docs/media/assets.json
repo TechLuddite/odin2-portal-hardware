@@ -1,158 +1,50 @@
 {
-  "generated": "2026-10-20",
-  "hardware_data": "synthetic fixture; not a live device capture",
+  "generated": "2026-11-07",
+  "hardware_data": "live readings from the maintainer's AYN Odin 2 Portal at capture time",
+  "capture": "grim on the Portal (Hyprland, 1920x1080 physical, scale 1.5), panel opened and navigated with the plugin's QML bridge, each image cropped to the popup border so no wallpaper or other window is included",
+  "system": "mainline Linux 7.4-rc1, Omarchy with the Tokyo Night theme, Odin2 Portal Hardware 0.4.2",
   "assets": {
-    "hackerman-overview.png": {
-      "sha256": "9c7a4e126a276681a9fff7c2c373d20d25ae31d025fcb6408408cc3e25c86a1e",
-      "width": 492,
-      "height": 430,
-      "source": "Actual Omarchy components, synthetic sysfs and isolated control responder",
-      "theme": "hackerman",
-      "view": "overview"
+    "overview.png": {
+      "sha256": "b98d238e5056568f585f6ecbfbf6f2b6daf6fc4764e16d7861ecce495294b3a7",
+      "width": 840,
+      "height": 759,
+      "view": "Overview tab"
     },
-    "hackerman-clocks.png": {
-      "sha256": "016638e03f0bfdfd8a339d7982517d33a9071bb5e7733e007b567cd2bb9dd9d0",
-      "width": 492,
-      "height": 394,
-      "source": "Actual Omarchy components, synthetic sysfs and isolated control responder",
-      "theme": "hackerman",
-      "view": "clocks"
+    "details-clocks.png": {
+      "sha256": "29fcc19972250307fd89e9011c64dd2b666261c60a02e2f729b0bd9f80fb3b9a",
+      "width": 840,
+      "height": 1020,
+      "view": "Details tab, Clocks (top of a scrolling view)"
     },
-    "hackerman-sensors.png": {
-      "sha256": "9cf3df128b51c12f44ac7f6424fb4a9176c04770c4e14f44f7a741f98fb0ae91",
-      "width": 492,
-      "height": 242,
-      "source": "Actual Omarchy components, synthetic sysfs and isolated control responder",
-      "theme": "hackerman",
-      "view": "sensors"
+    "details-sensors.png": {
+      "sha256": "7aa0b8a61ab01e6644a675f768b991552a15933a60cc1d79fc0e476c383093af",
+      "width": 840,
+      "height": 1020,
+      "view": "Details tab, Sensors (top of a scrolling view)"
     },
-    "hackerman-controls-power.png": {
-      "sha256": "b48f9029f92500fcc1a717ea01dfac3c3b171e62033b741b4220c41a95ad0189",
-      "width": 492,
-      "height": 355,
-      "source": "Actual Omarchy components, synthetic sysfs and isolated control responder",
-      "theme": "hackerman",
-      "view": "controls-power"
+    "controls-power.png": {
+      "sha256": "000c239cb1cdc9d8504ae21545077060c41566abe455426a7989b5770d0e2de7",
+      "width": 840,
+      "height": 851,
+      "view": "Controls tab, Power"
     },
-    "hackerman-controls-fan.png": {
-      "sha256": "e077cbf154a435e02af210de13fd2ced011c2d33598f57470e3f0cc3e2704bcd",
-      "width": 492,
-      "height": 479,
-      "source": "Actual Omarchy components, synthetic sysfs and isolated control responder",
-      "theme": "hackerman",
-      "view": "controls-fan"
+    "controls-fan.png": {
+      "sha256": "7c48539d3b76b3ec69c301614227afd044ee1f263b82526e0b7b792a7536ef3a",
+      "width": 840,
+      "height": 807,
+      "view": "Controls tab, Fan (kernel-owned fan on mainline Linux)"
     },
-    "hackerman-controls-lights.png": {
-      "sha256": "e38412718adc9e10749a5540d1e511ac3730c12922cbf0dbd2fd65c4d38bc670",
-      "width": 492,
-      "height": 557,
-      "source": "Actual Omarchy components, synthetic sysfs and isolated control responder",
-      "theme": "hackerman",
-      "view": "controls-lights"
-    },
-    "catppuccin-latte-overview.png": {
-      "sha256": "390e7c830972d44160263691d9d69d4aa1f5d0003090584aafded23c55a7e4de",
-      "width": 492,
-      "height": 430,
-      "source": "Actual Omarchy components, synthetic sysfs and isolated control responder",
-      "theme": "catppuccin-latte",
-      "view": "overview"
-    },
-    "catppuccin-latte-clocks.png": {
-      "sha256": "c6dcc311ce32f04d31e8b60640772735296007368e93764e7310e8cd67742af8",
-      "width": 492,
-      "height": 394,
-      "source": "Actual Omarchy components, synthetic sysfs and isolated control responder",
-      "theme": "catppuccin-latte",
-      "view": "clocks"
-    },
-    "catppuccin-latte-sensors.png": {
-      "sha256": "eb6eae5dc719b22a6c6c46135cf192e571b4c0a69b611a12b69fae4e4c583ada",
-      "width": 492,
-      "height": 242,
-      "source": "Actual Omarchy components, synthetic sysfs and isolated control responder",
-      "theme": "catppuccin-latte",
-      "view": "sensors"
-    },
-    "catppuccin-latte-controls-power.png": {
-      "sha256": "9c5d1e780c6be62433b8ec54c7b39401d4120aa83d967032823d5ab3f761d4e1",
-      "width": 492,
-      "height": 355,
-      "source": "Actual Omarchy components, synthetic sysfs and isolated control responder",
-      "theme": "catppuccin-latte",
-      "view": "controls-power"
-    },
-    "catppuccin-latte-controls-fan.png": {
-      "sha256": "2c7a956456a8abc78d7a733e36aa0b831406511250efea3cdbf401172849d356",
-      "width": 492,
-      "height": 479,
-      "source": "Actual Omarchy components, synthetic sysfs and isolated control responder",
-      "theme": "catppuccin-latte",
-      "view": "controls-fan"
-    },
-    "catppuccin-latte-controls-lights.png": {
-      "sha256": "e7483156826ec6facef44fdaf686867de4fff038da2419b07dc5a386614c16c0",
-      "width": 492,
-      "height": 557,
-      "source": "Actual Omarchy components, synthetic sysfs and isolated control responder",
-      "theme": "catppuccin-latte",
-      "view": "controls-lights"
-    },
-    "gruvbox-overview.png": {
-      "sha256": "8d420a28b99cb605893e47fa470ff05eb57c108a17c5bed1c2a9b98359497f93",
-      "width": 492,
-      "height": 430,
-      "source": "Actual Omarchy components, synthetic sysfs and isolated control responder",
-      "theme": "gruvbox",
-      "view": "overview"
-    },
-    "gruvbox-clocks.png": {
-      "sha256": "449cda84085ced9b978211c7d390d8e49adc7cecd9e88707ab1bcc4b0b7c1d91",
-      "width": 492,
-      "height": 394,
-      "source": "Actual Omarchy components, synthetic sysfs and isolated control responder",
-      "theme": "gruvbox",
-      "view": "clocks"
-    },
-    "gruvbox-sensors.png": {
-      "sha256": "731b4bff37776917d6c3f1962c099dd0f1b54e045097e7ee6d72f55d13fd4254",
-      "width": 492,
-      "height": 242,
-      "source": "Actual Omarchy components, synthetic sysfs and isolated control responder",
-      "theme": "gruvbox",
-      "view": "sensors"
-    },
-    "gruvbox-controls-power.png": {
-      "sha256": "9817c4480fb4468eace9692b29ebf4060d964bfdaf20b8d3188c35386d405a91",
-      "width": 492,
-      "height": 355,
-      "source": "Actual Omarchy components, synthetic sysfs and isolated control responder",
-      "theme": "gruvbox",
-      "view": "controls-power"
-    },
-    "gruvbox-controls-fan.png": {
-      "sha256": "c3c135482f2c6cc7896ae5696b3fb7f0d8ed20e79a7114d8e03f49953704aae8",
-      "width": 492,
-      "height": 479,
-      "source": "Actual Omarchy components, synthetic sysfs and isolated control responder",
-      "theme": "gruvbox",
-      "view": "controls-fan"
-    },
-    "gruvbox-controls-lights.png": {
-      "sha256": "49d52247b47cf4b80e5d47e75fa8d142333f258394f31d9440d5122c5a70af31",
-      "width": 492,
-      "height": 557,
-      "source": "Actual Omarchy components, synthetic sysfs and isolated control responder",
-      "theme": "gruvbox",
-      "view": "controls-lights"
+    "controls-lights.png": {
+      "sha256": "3e642496cb6f9b2b869466431177070fa8d27cb709bd21439796a9388f898b19",
+      "width": 840,
+      "height": 1020,
+      "view": "Controls tab, Lights"
     },
     "../../preview.png": {
-      "sha256": "24af93f013efc31d1ed49d3c181161f09607e78842611a393edd19b2d6a9764f",
-      "width": 492,
-      "height": 430,
-      "source": "Current private headless Wayland overview, synthetic sysfs",
-      "theme": "hackerman",
-      "view": "overview"
+      "sha256": "b98d238e5056568f585f6ecbfbf6f2b6daf6fc4764e16d7861ecce495294b3a7",
+      "width": 840,
+      "height": 759,
+      "view": "Overview tab (same capture as overview.png)"
     }
   }
 }
