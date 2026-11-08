@@ -221,4 +221,14 @@ Open:
   thermal zone's `mode` to `disabled` while Manual or Max is active, drive
   `pwm1` from the helper, and re-enable the zone on release, suspend, helper
   exit and above the hot limit. Tracked as backlog H8 in the Portal project.
-- Hosted CI and publication remain pending; the repository has no remote.
+- Published 2026-11-07 as `TechLuddite/odin2-portal-hardware`. Hosted CI:
+  tests pass. Luddite Scout fails on S7 high "uses sudo" for
+  `system/install-helper.py` (the root helper is by design) and on S7 medium
+  "collects a child process's whole output before checking its size" at
+  `Service.qml:104` (the handoff process; worth bounding). The marketplace
+  baseline also fails; marketplace submission is not planned yet, so that is
+  accepted for now.
+- With a kernel-owned fan the Fan tab still shows the disabled mode buttons,
+  slider and the Auto explanation under the kernel note. Hiding them in that
+  state would read more clearly.
+- README screenshots are live captures from 2026-11-07 (see docs/media).
