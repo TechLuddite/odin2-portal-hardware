@@ -1,0 +1,9 @@
+{
+  "accepted": [
+    {
+      "rule": "S7.sudo",
+      "path": "system/install-helper.py",
+      "reason": "This is the root installer for the hardware daemon. The match is its usage line, which tells the user to run it with sudo. It refuses to run unless it is root, and privilege is the documented purpose."
+    }
+  ]
+}

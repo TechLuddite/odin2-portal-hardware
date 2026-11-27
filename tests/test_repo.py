@@ -52,6 +52,8 @@ class RepositoryTests(unittest.TestCase):
         qml = (ROOT / "Service.qml").read_text()
         self.assertIn('"/usr/bin/python3", "-I", "-B"', qml)
         self.assertIn("text.length > 65536", qml)
+        self.assertIn("readonly property int outputLimit: 65536", qml)
+        self.assertNotIn("StdioCollector", qml)
         self.assertIn("interval: 5000", qml)
         self.assertFalse((ROOT / "install.sh").exists())
         self.assertFalse((ROOT / "requirements.txt").exists())

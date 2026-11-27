@@ -38,6 +38,15 @@ Item {
   property var readerCommand: ["/usr/bin/python3", "-I", "-B",
     Qt.resolvedUrl("bin/odin2-portal-hardware").toString().replace(/^file:\/\//, ""), "--session", root.sessionToken]
 
+  // Each child is read in chunks and killed once its output passes the limit,
+  // so the shell process never holds more than outputLimit characters of it.
+  readonly property int outputLimit: 65536
+  function take(proc, chunk) {
+    if (proc.over) return
+    if (proc.out.length + chunk.length <= root.outputLimit) proc.out += chunk
+    else { proc.over = true; proc.out = ""; proc.signal(9) }
+  }
+
   function control(request) {
     if (root.controlling) return
     root.lightingFailed = false
@@ -101,45 +110,49 @@ Item {
   Process {
     id: bootstrap
     command: root.handoffCommand
-    stdout: StdioCollector {
-      onStreamFinished: {
-        try {
-          var value = JSON.parse(text)
-          if (value.adopted && typeof value.token === "string" && /^[A-Za-z0-9_-]{20,100}$/.test(value.token))
-            root.sessionToken = value.token
-        } catch (error) {}
-      }
+    property string out: ""
+    property bool over: false
+    onStarted: { out = ""; over = false }
+    stdout: SplitParser { splitMarker: ""; onRead: function(chunk) { root.take(bootstrap, chunk) } }
+    onExited: {
+      try {
+        var value = JSON.parse(bootstrap.out)
+        if (value.adopted && typeof value.token === "string" && /^[A-Za-z0-9_-]{20,100}$/.test(value.token))
+          root.sessionToken = value.token
+      } catch (error) {}
+      root.refresh()
     }
-    onExited: root.refresh()
   }
   Process {
     id: startup
     command: root.startupCommand
-    stdout: StdioCollector {
-      onStreamFinished: {
-        try {
-          var result = JSON.parse(text)
-          root.startupReady = result.startup === "ready"
-          root.controlError = result.error || (root.startupReady ? "" : "Waiting to restore saved power/fan settings")
-          if (root.snapshot) root.snapshot = Object.assign({}, root.snapshot, {controls: result})
-        } catch (error) { root.controlError = "Could not initialize power/fan settings" }
-      }
+    property string out: ""
+    property bool over: false
+    onStarted: { out = ""; over = false }
+    stdout: SplitParser { splitMarker: ""; onRead: function(chunk) { root.take(startup, chunk) } }
+    onExited: {
+      try {
+        var result = JSON.parse(startup.out)
+        root.startupReady = result.startup === "ready"
+        root.controlError = result.error || (root.startupReady ? "" : "Waiting to restore saved power/fan settings")
+        if (root.snapshot) root.snapshot = Object.assign({}, root.snapshot, {controls: result})
+      } catch (error) { root.controlError = "Could not initialize power/fan settings" }
+      if (root.startupReady) root.refresh()
     }
-    onExited: if (root.startupReady) root.refresh()
   }
   Process {
     id: lightSync
     command: root.lightingCommand
-    stdout: StdioCollector {
-      onStreamFinished: {
-        try {
-          var result = JSON.parse(text)
-          root.lightingFailed = !!result.error
-          root.controlError = result.error || ""
-        } catch (error) { root.lightingFailed = true; root.controlError = "Could not restore LED settings" }
-      }
-    }
+    property string out: ""
+    property bool over: false
+    onStarted: { out = ""; over = false }
+    stdout: SplitParser { splitMarker: ""; onRead: function(chunk) { root.take(lightSync, chunk) } }
     onExited: function(code, status) {
+      try {
+        var result = JSON.parse(lightSync.out)
+        root.lightingFailed = !!result.error
+        root.controlError = result.error || ""
+      } catch (error) { root.lightingFailed = true; root.controlError = "Could not restore LED settings" }
       if (code !== 0 || status !== 0) { root.lightingFailed = true; root.controlError = "LED synchronization failed" }
       root.refresh()
     }
@@ -156,17 +169,17 @@ Item {
   Process {
     id: writer
     command: root.controlCommand.concat(["--request", root.requestPayload])
-    stdout: StdioCollector {
-      onStreamFinished: {
-        try {
-          if (text.length > 65536) throw new Error("size")
-          var result = JSON.parse(text)
-          root.controlError = result.error || result.preference_error || ""
-          if (root.snapshot) root.snapshot = Object.assign({}, root.snapshot, {controls: result})
-        } catch (error) { root.controlError = "Invalid response from hardware helper." }
-      }
-    }
+    property string out: ""
+    property bool over: false
+    onStarted: { out = ""; over = false }
+    stdout: SplitParser { splitMarker: ""; onRead: function(chunk) { root.take(writer, chunk) } }
     onExited: function(code, status) {
+      try {
+        if (writer.over) throw new Error("size")
+        var result = JSON.parse(writer.out)
+        root.controlError = result.error || result.preference_error || ""
+        if (root.snapshot) root.snapshot = Object.assign({}, root.snapshot, {controls: result})
+      } catch (error) { root.controlError = "Invalid response from hardware helper." }
       if (code !== 0 || status !== 0) root.controlError = "Hardware control request failed."
       root.refresh()
     }
@@ -174,12 +187,14 @@ Item {
   Process {
     id: reader
     command: root.readerCommand
-    stdout: StdioCollector {
-      waitForEnd: true
-      onStreamFinished: if (!root.timedOut) root.accept(text)
-    }
+    property string out: ""
+    property bool over: false
+    onStarted: { out = ""; over = false }
+    stdout: SplitParser { splitMarker: ""; onRead: function(chunk) { root.take(reader, chunk) } }
     onExited: function(code, status) {
       deadline.stop()
+      if (reader.over) root.lastError = "Hardware response was too large."
+      else if (!root.timedOut) root.accept(reader.out)
       if ((code !== 0 || status !== 0) && root.lastError === "")
         root.lastError = "Hardware reader stopped unexpectedly."
     }
