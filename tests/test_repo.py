@@ -64,7 +64,8 @@ class RepositoryTests(unittest.TestCase):
         self.assertNotIn("pull_request_target", source)
         for use in re.findall(r"uses:\s*(\S+)", source):
             self.assertRegex(use, r"@[0-9a-f]{40}$")
-        self.assertIn("SCOUT_SHA: d484fb96482e74681adcc42d22b88fb6db26920f", source)
+        self.assertIn("TechLuddite/luddite-scout-action@b34b6a811b70e99c51a8e9b1f4a1aeecc786d99d", source)
+        self.assertIn("accepted: .scout-accepted.json", source)
         self.assertIn("MARKETPLACE_SHA: fd5874893f5f4690570d2d88e8bcfb6df9f30184", source)
 
     def test_documentation_links(self):
